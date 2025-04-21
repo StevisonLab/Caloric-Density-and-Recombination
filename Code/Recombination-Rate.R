@@ -1,5 +1,6 @@
 #set the working Directory
 #setwd("C:/Users/Melika Shiran/Box/Plasticity and Nutrition NEW (Melika)/03. Raw Data and Analysis/2_RR and ZL Marker present/Data_Analysed(csv)")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Code")
 
 # Read and combine all files
 library(dplyr)
