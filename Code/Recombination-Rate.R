@@ -11,6 +11,12 @@ library(lme4)
 library(lmerTest) # For p-values in mixed models
 library(emmeans)  # For post-hoc tests
 
+# SetWD
+#Laurie version
+#setwd("/Users/lss0021/Documents/GitHub/Caloric-Density-and-Recombination/Code")
+#Melika version
+
+
 # Combining all the phenotypes
 phenotype_files <- list.files(path = "../Raw Data/Pilots/Recombination Rate/Phenotypes", pattern = "\\.csv$", full.names = TRUE)
 
