@@ -670,16 +670,54 @@ extra_info <- initial_dataset %>%
   summarise(
     F1.developmental = first(F1.developmental),
     F1.Genotype = first(F1.Genotype),
-    total_egg_count = sum(Egg_sumcount, na.rm = TRUE),
+    total_egg_count = first(Egg_sumcount),  # ← ONLY take the first!
     total_adult_count = sum(Count, na.rm = TRUE),
     adult_female_count = sum(Count[Sex == "F"], na.rm = TRUE),
     adult_male_count = sum(Count[Sex == "M"], na.rm = TRUE),
     .groups = "drop"
   )
+
 # Join the wide marker data and extra info
 entries <- left_join(extra_info, entries, by = c("VialID", "Brood"))
 
+# Add viability columns manually with value 1
+entries <- entries %>%
+  mutate(
+    mean_treatment_marker_free_viability = 1,
+    mean_treatment_female_marker_free_viability = 1,
+    mean_treatment_male_marker_free_viability = 1
+  )
+#adding unkown (dead) to the adult count
+entries <- entries %>%
+  rowwise() %>%
+  mutate(
+    # Split obs_Unknown between female and male
+    split_unknown = if (!is.na(obs_Unknown)) {
+      if (obs_Unknown %% 2 == 0) obs_Unknown / 2
+      else sample(c(floor(obs_Unknown / 2), ceiling(obs_Unknown / 2)), size = 1)
+    } else 0,
+    
+    # Adjust female and male adult counts
+    adult_female_count = adult_female_count + split_unknown,
+    adult_male_count = adult_male_count + (if (!is.na(obs_Unknown)) obs_Unknown - split_unknown else 0),
+    total_adult_count = adult_female_count + adult_male_count,
+    
+# Calculate lethality
+    obs_lethal_f = round((total_egg_count / 2) - adult_female_count),
+    obs_lethal_m = round((total_egg_count / 2) - adult_male_count)
+  ) %>%
+  ungroup() %>%
+  
+  # Ensure lethality is not negative
+  mutate(
+    obs_lethal_f = pmax(obs_lethal_f, 0),
+    obs_lethal_m = pmax(obs_lethal_m, 0)
+  )
 
+write_csv(entries, "../Raw Data/Pilots/Recombination Rate/entries.csv")
+
+#save data
+#write_csv(entries, "../Raw Data/Pilots/Recombination Rate/entries.csv")
 
 # for loop to iterate analysis by vial-day
 #   1) pull out a row, 
