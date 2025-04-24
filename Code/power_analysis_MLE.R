@@ -645,7 +645,7 @@ colnames(MLE_analyzed_dataset_temperature) <- c("vial","treatment", "mean_treatm
 
 
 
-for(entry in 1:31){
+for(entry in 1:length(initial_dataset)){
   
   # Pull out a single treatment from the dataset to be analyzed
   single_vial<-initial_dataset[entry,]
@@ -669,7 +669,7 @@ for(entry in 1:31){
                                         fn = Recombination.Fraction.Likelihood,
                                         gr = NULL,
                                         method = "Nelder-Mead", 
-                                        control = list(maxit = 10000,
+                                        control = list(maxit = 100, #up to 10k previously
                                                        alpha = 2.0,
                                                        beta = 0.25,
                                                        gamma = 4.0))
@@ -700,17 +700,22 @@ for(entry in 1:31){
 write.csv(MLE_analyzed_dataset_temperature,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 
 df<-MLE_analyzed_dataset_temperature
-recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf_1 + MLE_analyzed_dataset_temperature$estimated_rf_2 + MLE_analyzed_dataset_temperature$estimated_rf_3 + MLE_analyzed_dataset_temperature$estimated_rf_4 + MLE_analyzed_dataset_temperature$estimated_rf_5)
-temperature_treatments <- MLE_analyzed_dataset_temperature$treatment
-character_treatments <- as.character(temperature_treatments)
-abc <- cbind(temperature_treatments, recombination_fractions)
-df <-data.frame(abc)
-df$temperature_treatments<-as.character(df$temperature_treatments) 
+
+#extract brood and genotype columns
+df <- separate(df, col = treatment, into = c("diet", "GB"), sep = "_")
+df <- separate(df, col = vial, into = c("vialID", "Brood"), sep = "_")
 
 
-linear_model_temperature_estimated_map_length <- lm(formula =  recombination_fractions ~ temperature_treatments, data = df)
-map_length_anova_table <- anova(linear_model_temperature_estimated_map_length)
-map_length_emmeans_table <- emmeans(linear_model_temperature_estimated_map_length, ~ temperature_treatments)
-write.csv(map_length_anova_table,"/Users/spencerkoury/Desktop/local_temperature/6a_map_length_anova_table.csv",row.names = TRUE)
-write.csv(map_length_emmeans_table,"/Users/spencerkoury/Desktop/local_temperature/6b_map_length_emmeans_table.csv",row.names = TRUE)
+df$recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf_1 + MLE_analyzed_dataset_temperature$estimated_rf_2 + MLE_analyzed_dataset_temperature$estimated_rf_3 + MLE_analyzed_dataset_temperature$estimated_rf_4 + MLE_analyzed_dataset_temperature$estimated_rf_5)
+df$GB<-as.character(df$GB) 
+
+df=df[,c("vialID","Brood","diet","GB","recombination_fractions")]
+
+
+linear_model_estimated_map_length <- glm(formula =  recombination_fractions ~ diet*GB*Brood, data = df)
+map_length_anova_table <- anova(linear_model_estimated_map_length)
+map_length_emmeans_table <- emmeans(linear_model_estimated_map_length, specs = pairwise ~ diet, by=c("GB","Brood"), mode="kenward-roger")
+contrast(map_length_emmeans_table, method="pairwise")
+write.csv(map_length_anova_table,"../Statistical Analysis/map_length_anova_table.csv",row.names = TRUE)
+write.csv(map_length_emmeans_table,"../Statistical Analysis/map_length_emmeans_table.csv",row.names = TRUE)
 
