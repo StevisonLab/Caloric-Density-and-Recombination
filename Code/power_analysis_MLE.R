@@ -509,136 +509,28 @@ Recombination.Fraction.Likelihood <- function(parameters) {
             exp_lethal_m)
   
   # Vector of expected frequencies of each recombination pattern
-  expected_freqs <- c(exp_000000_f/D,
-                      exp_111111_f/D,
-                      exp_100000_f/D,
-                      exp_011111_f/D,
-                      exp_110000_f/D,
-                      exp_001111_f/D,
-                      exp_111000_f/D,
-                      exp_000111_f/D,
-                      exp_111100_f/D,
-                      exp_000011_f/D,
-                      exp_111110_f/D,
-                      exp_000001_f/D,
-                      exp_010000_f/D,
-                      exp_101111_f/D,
-                      exp_011000_f/D,
-                      exp_100111_f/D,
-                      exp_011100_f/D,
-                      exp_100011_f/D,
-                      exp_011110_f/D,
-                      exp_100001_f/D,
-                      exp_001000_f/D,
-                      exp_110111_f/D,
-                      exp_001100_f/D,
-                      exp_110011_f/D,
-                      exp_001110_f/D,
-                      exp_110001_f/D,
-                      exp_000100_f/D,
-                      exp_111011_f/D,
-                      exp_000110_f/D,
-                      exp_111001_f/D,
-                      exp_000010_f/D,
-                      exp_111101_f/D,
-                      exp_101000_f/D,
-                      exp_010111_f/D,
-                      exp_101100_f/D,
-                      exp_010011_f/D,
-                      exp_101110_f/D,
-                      exp_010001_f/D,
-                      exp_100100_f/D,
-                      exp_011011_f/D,
-                      exp_100110_f/D,
-                      exp_011001_f/D,
-                      exp_100010_f/D,
-                      exp_011101_f/D,
-                      exp_110100_f/D,
-                      exp_001011_f/D,
-                      exp_110110_f/D,
-                      exp_001001_f/D,
-                      exp_110010_f/D,
-                      exp_001101_f/D,
-                      exp_111010_f/D,
-                      exp_000101_f/D,
-                      exp_010100_f/D,
-                      exp_101011_f/D,
-                      exp_010110_f/D,
-                      exp_101001_f/D,
-                      exp_010010_f/D,
-                      exp_101101_f/D,
-                      exp_011010_f/D,
-                      exp_100101_f/D,
-                      exp_001010_f/D,
-                      exp_110101_f/D,
-                      exp_101010_f/D,
-                      exp_010101_f/D,
-                      exp_lethal_f/D,
-                      exp_000000_m/D,
-                      exp_111111_m/D,
-                      exp_100000_m/D,
-                      exp_011111_m/D,
-                      exp_110000_m/D,
-                      exp_001111_m/D,
-                      exp_111000_m/D,
-                      exp_000111_m/D,
-                      exp_111100_m/D,
-                      exp_000011_m/D,
-                      exp_111110_m/D,
-                      exp_000001_m/D,
-                      exp_010000_m/D,
-                      exp_101111_m/D,
-                      exp_011000_m/D,
-                      exp_100111_m/D,
-                      exp_011100_m/D,
-                      exp_100011_m/D,
-                      exp_011110_m/D,
-                      exp_100001_m/D,
-                      exp_001000_m/D,
-                      exp_110111_m/D,
-                      exp_001100_m/D,
-                      exp_110011_m/D,
-                      exp_001110_m/D,
-                      exp_110001_m/D,
-                      exp_000100_m/D,
-                      exp_111011_m/D,
-                      exp_000110_m/D,
-                      exp_111001_m/D,
-                      exp_000010_m/D,
-                      exp_111101_m/D,
-                      exp_101000_m/D,
-                      exp_010111_m/D,
-                      exp_101100_m/D,
-                      exp_010011_m/D,
-                      exp_101110_m/D,
-                      exp_010001_m/D,
-                      exp_100100_m/D,
-                      exp_011011_m/D,
-                      exp_100110_m/D,
-                      exp_011001_m/D,
-                      exp_100010_m/D,
-                      exp_011101_m/D,
-                      exp_110100_m/D,
-                      exp_001011_m/D,
-                      exp_110110_m/D,
-                      exp_001001_m/D,
-                      exp_110010_m/D,
-                      exp_001101_m/D,
-                      exp_111010_m/D,
-                      exp_000101_m/D,
-                      exp_010100_m/D,
-                      exp_101011_m/D,
-                      exp_010110_m/D,
-                      exp_101001_m/D,
-                      exp_010010_m/D,
-                      exp_101101_m/D,
-                      exp_011010_m/D,
-                      exp_100101_m/D,
-                      exp_001010_m/D,
-                      exp_110101_m/D,
-                      exp_101010_m/D,
-                      exp_010101_m/D,
-                      exp_lethal_m/D)
+  var_names <- c(
+    "exp_000000_f", "exp_111111_f", "exp_100000_f", "exp_011111_f", "exp_110000_f", "exp_001111_f", "exp_111000_f", "exp_000111_f",
+    "exp_111100_f", "exp_000011_f", "exp_111110_f", "exp_000001_f", "exp_010000_f", "exp_101111_f", "exp_011000_f", "exp_100111_f",
+    "exp_011100_f", "exp_100011_f", "exp_011110_f", "exp_100001_f", "exp_001000_f", "exp_110111_f", "exp_001100_f", "exp_110011_f",
+    "exp_001110_f", "exp_110001_f", "exp_000100_f", "exp_111011_f", "exp_000110_f", "exp_111001_f", "exp_000010_f", "exp_111101_f",
+    "exp_101000_f", "exp_010111_f", "exp_101100_f", "exp_010011_f", "exp_101110_f", "exp_010001_f", "exp_100100_f", "exp_011011_f",
+    "exp_100110_f", "exp_011001_f", "exp_100010_f", "exp_011101_f", "exp_110100_f", "exp_001011_f", "exp_110110_f", "exp_001001_f",
+    "exp_110010_f", "exp_001101_f", "exp_111010_f", "exp_000101_f", "exp_010100_f", "exp_101011_f", "exp_010110_f", "exp_101001_f",
+    "exp_010010_f", "exp_101101_f", "exp_011010_f", "exp_100101_f", "exp_001010_f", "exp_110101_f", "exp_101010_f", "exp_010101_f",
+    "exp_lethal_f", "exp_000000_m", "exp_111111_m", "exp_100000_m", "exp_011111_m", "exp_110000_m", "exp_001111_m", "exp_111000_m",
+    "exp_000111_m", "exp_111100_m", "exp_000011_m", "exp_111110_m", "exp_000001_m", "exp_010000_m", "exp_101111_m", "exp_011000_m",
+    "exp_100111_m", "exp_011100_m", "exp_100011_m", "exp_011110_m", "exp_100001_m", "exp_001000_m", "exp_110111_m", "exp_001100_m",
+    "exp_110011_m", "exp_001110_m", "exp_110001_m", "exp_000100_m", "exp_111011_m", "exp_000110_m", "exp_111001_m", "exp_000010_m",
+    "exp_111101_m", "exp_101000_m", "exp_010111_m", "exp_101100_m", "exp_010011_m", "exp_101110_m", "exp_010001_m", "exp_100100_m",
+    "exp_011011_m", "exp_100110_m", "exp_011001_m", "exp_100010_m", "exp_011101_m", "exp_110100_m", "exp_001011_m", "exp_110110_m",
+    "exp_001001_m", "exp_110010_m", "exp_001101_m", "exp_111010_m", "exp_000101_m", "exp_010100_m", "exp_101011_m", "exp_010110_m",
+    "exp_101001_m", "exp_010010_m", "exp_101101_m", "exp_011010_m", "exp_100101_m", "exp_001010_m", "exp_110101_m", "exp_101010_m",
+    "exp_010101_m", "exp_lethal_m"
+  )
+  
+  # Get the values and divide
+  expected_freqs <- unlist(mget(var_names)) / D
   
   # raw_log_likelihoods for each of the individual recombination classes
   # log_likelihood is the sum of the individual recombination classes
@@ -685,7 +577,7 @@ entries <- entries %>%
   mutate(
     mean_treatment_marker_free_viability = 1,
     mean_treatment_female_marker_free_viability = 1,
-    mean_treatment_male_marker_free_viability = 1
+    mean_treatment_male_marker_free_viability = 1,
   )
 #adding unkown (dead) to the adult count
 entries <- entries %>%
@@ -714,6 +606,22 @@ entries <- entries %>%
     obs_lethal_m = pmax(obs_lethal_m, 0)
   )
 
+# Vector of required columns
+required_cols <- c("obs_000000_f", "obs_111111_f", "obs_100000_f", "obs_011111_f", "obs_110000_f", "obs_001111_f", "obs_111000_f", "obs_000111_f", "obs_111100_f", "obs_000011_f", "obs_111110_f", "obs_000001_f", "obs_010000_f", "obs_101111_f", "obs_011000_f", "obs_100111_f", "obs_011100_f", "obs_100011_f", "obs_011110_f", "obs_100001_f", "obs_001000_f", "obs_110111_f", "obs_001100_f", "obs_110011_f", "obs_001110_f", "obs_110001_f", "obs_000100_f", "obs_111011_f", "obs_000110_f", "obs_111001_f", "obs_000010_f", "obs_111101_f", "obs_101000_f", "obs_010111_f", "obs_101100_f", "obs_010011_f", "obs_101110_f", "obs_010001_f", "obs_100100_f", "obs_011011_f", "obs_100110_f", "obs_011001_f", "obs_100010_f", "obs_011101_f", "obs_110100_f", "obs_001011_f", "obs_110110_f", "obs_001001_f", "obs_110010_f", "obs_001101_f", "obs_111010_f", "obs_000101_f", "obs_010100_f", "obs_101011_f", "obs_010110_f", "obs_101001_f", "obs_010010_f", "obs_101101_f", "obs_011010_f", "obs_100101_f", "obs_001010_f", "obs_110101_f", "obs_101010_f", "obs_010101_f", "obs_lethal_f", "obs_000000_m", "obs_111111_m", "obs_100000_m", "obs_011111_m", "obs_110000_m", "obs_001111_m", "obs_111000_m", "obs_000111_m", "obs_111100_m", "obs_000011_m", "obs_111110_m", "obs_000001_m", "obs_010000_m", "obs_101111_m", "obs_011000_m", "obs_100111_m", "obs_011100_m", "obs_100011_m", "obs_011110_m", "obs_100001_m", "obs_001000_m", "obs_110111_m", "obs_001100_m", "obs_110011_m", "obs_001110_m", "obs_110001_m", "obs_000100_m", "obs_111011_m", "obs_000110_m", "obs_111001_m", "obs_000010_m", "obs_111101_m", "obs_101000_m", "obs_010111_m", "obs_101100_m", "obs_010011_m", "obs_101110_m", "obs_010001_m", "obs_100100_m", "obs_011011_m", "obs_100110_m", "obs_011001_m", "obs_100010_m", "obs_011101_m", "obs_110100_m", "obs_001011_m", "obs_110110_m", "obs_001001_m", "obs_110010_m", "obs_001101_m", "obs_111010_m", "obs_000101_m", "obs_010100_m", "obs_101011_m", "obs_010110_m", "obs_101001_m", "obs_010010_m", "obs_101101_m", "obs_011010_m", "obs_100101_m", "obs_001010_m", "obs_110101_m", "obs_101010_m", "obs_010101_m", "obs_lethal_m")
+
+# Add missing columns with zeros
+for (col in required_cols) {
+  if (!col %in% colnames(entries)) {
+    entries[[col]] <- as.integer(0)
+    
+  }
+}
+
+entries$treatment=paste(entries$F1.developmental,entries$F1.Genotype,sep="_")
+entries$vial=paste(entries$VialID,entries$Brood,sep="_")
+
+initial_dataset=entries[,c("vial","treatment", "mean_treatment_marker_free_viability", "mean_treatment_female_marker_free_viability", "mean_treatment_male_marker_free_viability", "total_egg_count", "total_adult_count", "adult_female_count", "adult_male_count", "obs_000000_f", "obs_111111_f", "obs_100000_f", "obs_011111_f", "obs_110000_f", "obs_001111_f", "obs_111000_f", "obs_000111_f", "obs_111100_f", "obs_000011_f", "obs_111110_f", "obs_000001_f", "obs_010000_f", "obs_101111_f", "obs_011000_f", "obs_100111_f", "obs_011100_f", "obs_100011_f", "obs_011110_f", "obs_100001_f", "obs_001000_f", "obs_110111_f", "obs_001100_f", "obs_110011_f", "obs_001110_f", "obs_110001_f", "obs_000100_f", "obs_111011_f", "obs_000110_f", "obs_111001_f", "obs_000010_f", "obs_111101_f", "obs_101000_f", "obs_010111_f", "obs_101100_f", "obs_010011_f", "obs_101110_f", "obs_010001_f", "obs_100100_f", "obs_011011_f", "obs_100110_f", "obs_011001_f", "obs_100010_f", "obs_011101_f", "obs_110100_f", "obs_001011_f", "obs_110110_f", "obs_001001_f", "obs_110010_f", "obs_001101_f", "obs_111010_f", "obs_000101_f", "obs_010100_f", "obs_101011_f", "obs_010110_f", "obs_101001_f", "obs_010010_f", "obs_101101_f", "obs_011010_f", "obs_100101_f", "obs_001010_f", "obs_110101_f", "obs_101010_f", "obs_010101_f", "obs_lethal_f", "obs_000000_m", "obs_111111_m", "obs_100000_m", "obs_011111_m", "obs_110000_m", "obs_001111_m", "obs_111000_m", "obs_000111_m", "obs_111100_m", "obs_000011_m", "obs_111110_m", "obs_000001_m", "obs_010000_m", "obs_101111_m", "obs_011000_m", "obs_100111_m", "obs_011100_m", "obs_100011_m", "obs_011110_m", "obs_100001_m", "obs_001000_m", "obs_110111_m", "obs_001100_m", "obs_110011_m", "obs_001110_m", "obs_110001_m", "obs_000100_m", "obs_111011_m", "obs_000110_m", "obs_111001_m", "obs_000010_m", "obs_111101_m", "obs_101000_m", "obs_010111_m", "obs_101100_m", "obs_010011_m", "obs_101110_m", "obs_010001_m", "obs_100100_m", "obs_011011_m", "obs_100110_m", "obs_011001_m", "obs_100010_m", "obs_011101_m", "obs_110100_m", "obs_001011_m", "obs_110110_m", "obs_001001_m", "obs_110010_m", "obs_001101_m", "obs_111010_m", "obs_000101_m", "obs_010100_m", "obs_101011_m", "obs_010110_m", "obs_101001_m", "obs_010010_m", "obs_101101_m", "obs_011010_m", "obs_100101_m", "obs_001010_m", "obs_110101_m", "obs_101010_m", "obs_010101_m", "obs_lethal_m")]
+
 write_csv(entries, "../Raw Data/Pilots/Recombination Rate/entries.csv")
 
 #save data
@@ -733,6 +641,8 @@ write_csv(entries, "../Raw Data/Pilots/Recombination Rate/entries.csv")
 # create empty dataframe for output of the for loop to feed into
 MLE_analyzed_dataset_temperature <- data.frame(matrix(ncol=139, nrow=0)) #FIX THIS
 colnames(MLE_analyzed_dataset_temperature) <- c("vial","treatment", "mean_treatment_marker_free_viability", "mean_treatment_female_marker_free_viability", "mean_treatment_male_marker_free_viability", "total_egg_count", "total_adult_count", "adult_female_count", "adult_male_count", "obs_000000_f", "obs_111111_f", "obs_100000_f", "obs_011111_f", "obs_110000_f", "obs_001111_f", "obs_111000_f", "obs_000111_f", "obs_111100_f", "obs_000011_f", "obs_111110_f", "obs_000001_f", "obs_010000_f", "obs_101111_f", "obs_011000_f", "obs_100111_f", "obs_011100_f", "obs_100011_f", "obs_011110_f", "obs_100001_f", "obs_001000_f", "obs_110111_f", "obs_001100_f", "obs_110011_f", "obs_001110_f", "obs_110001_f", "obs_000100_f", "obs_111011_f", "obs_000110_f", "obs_111001_f", "obs_000010_f", "obs_111101_f", "obs_101000_f", "obs_010111_f", "obs_101100_f", "obs_010011_f", "obs_101110_f", "obs_010001_f", "obs_100100_f", "obs_011011_f", "obs_100110_f", "obs_011001_f", "obs_100010_f", "obs_011101_f", "obs_110100_f", "obs_001011_f", "obs_110110_f", "obs_001001_f", "obs_110010_f", "obs_001101_f", "obs_111010_f", "obs_000101_f", "obs_010100_f", "obs_101011_f", "obs_010110_f", "obs_101001_f", "obs_010010_f", "obs_101101_f", "obs_011010_f", "obs_100101_f", "obs_001010_f", "obs_110101_f", "obs_101010_f", "obs_010101_f", "obs_lethal_f", "obs_000000_m", "obs_111111_m", "obs_100000_m", "obs_011111_m", "obs_110000_m", "obs_001111_m", "obs_111000_m", "obs_000111_m", "obs_111100_m", "obs_000011_m", "obs_111110_m", "obs_000001_m", "obs_010000_m", "obs_101111_m", "obs_011000_m", "obs_100111_m", "obs_011100_m", "obs_100011_m", "obs_011110_m", "obs_100001_m", "obs_001000_m", "obs_110111_m", "obs_001100_m", "obs_110011_m", "obs_001110_m", "obs_110001_m", "obs_000100_m", "obs_111011_m", "obs_000110_m", "obs_111001_m", "obs_000010_m", "obs_111101_m", "obs_101000_m", "obs_010111_m", "obs_101100_m", "obs_010011_m", "obs_101110_m", "obs_010001_m", "obs_100100_m", "obs_011011_m", "obs_100110_m", "obs_011001_m", "obs_100010_m", "obs_011101_m", "obs_110100_m", "obs_001011_m", "obs_110110_m", "obs_001001_m", "obs_110010_m", "obs_001101_m", "obs_111010_m", "obs_000101_m", "obs_010100_m", "obs_101011_m", "obs_010110_m", "obs_101001_m", "obs_010010_m", "obs_101101_m", "obs_011010_m", "obs_100101_m", "obs_001010_m", "obs_110101_m", "obs_101010_m", "obs_010101_m", "obs_lethal_m")
+
+
 
 
 for(entry in 1:31){
@@ -787,7 +697,7 @@ for(entry in 1:31){
   MLE_analyzed_dataset_temperature <- rbind(MLE_analyzed_dataset_temperature, output)
 }
 
-write.csv(MLE_analyzed_dataset_temperature,"/Users/spencerkoury/Desktop/local_temperature/5_MLE_analyzed_dataset_temperature.csv",row.names = TRUE)
+write.csv(MLE_analyzed_dataset_temperature,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 
 df<-MLE_analyzed_dataset_temperature
 recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf_1 + MLE_analyzed_dataset_temperature$estimated_rf_2 + MLE_analyzed_dataset_temperature$estimated_rf_3 + MLE_analyzed_dataset_temperature$estimated_rf_4 + MLE_analyzed_dataset_temperature$estimated_rf_5)
