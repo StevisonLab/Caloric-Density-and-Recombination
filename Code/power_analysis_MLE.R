@@ -1,7 +1,9 @@
 # MLE of recombination parameters for multiply marked X chromosome
 
 # Set working directory
-setwd("~/Desktop/local_temperature")
+##setwd("~/Desktop/local_temperature")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Code")
+
 
 # Install and load packages "tidyverse", "magrittr", "dplyr", and "emmeans"
 library(tidyverse)
@@ -648,8 +650,36 @@ Recombination.Fraction.Likelihood <- function(parameters) {
 }
 
 # Read in raw counts, treatments, metadata from csv file for a single recombination experiment 
-initial_dataset <- read.csv("power_analysis_dataset.csv") # each row is a vial and each column is a phenotypic class count
-entries <- nrow(initial_dataset)
+##initial_dataset <- read.csv("power_analysis_dataset.csv") # each row is a vial and each column is a phenotypic class count
+##entries <- nrow(initial_dataset)
+
+initial_dataset <- read.csv("../Raw Data/Pilots/Recombination Rate/merged_data_output.csv") 
+
+entries <- initial_dataset %>%
+  mutate(Marker_Label = paste0("obs_", Markers)) %>%
+  group_by(VialID, Brood, Marker_Label) %>%
+  summarise(Count = sum(Count), .groups = "drop") %>%
+  pivot_wider(
+    names_from = Marker_Label,
+    values_from = Count,
+    values_fill = list(Count = 0)
+  )
+#entering additional columns
+extra_info <- initial_dataset %>%
+  group_by(VialID, Brood) %>%
+  summarise(
+    F1.developmental = first(F1.developmental),
+    F1.Genotype = first(F1.Genotype),
+    total_egg_count = sum(Egg_sumcount, na.rm = TRUE),
+    total_adult_count = sum(Count, na.rm = TRUE),
+    adult_female_count = sum(Count[Sex == "F"], na.rm = TRUE),
+    adult_male_count = sum(Count[Sex == "M"], na.rm = TRUE),
+    .groups = "drop"
+  )
+# Join the wide marker data and extra info
+entries <- left_join(extra_info, entries, by = c("VialID", "Brood"))
+
+
 
 # for loop to iterate analysis by vial-day
 #   1) pull out a row, 

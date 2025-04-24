@@ -61,7 +61,7 @@ treatment_key <- treatment_key %>%
 
 #make sure that it is chracter
 treatment_key <- treatment_key %>%
-  mutate(VialID = as.character(VialID))
+  mutate(VialID = as.character(VialID), `F1 Genotype`= as.character(`F1 Genotype`) )
 
 #reading egg count
 egg_count <- read_csv("../Raw Data/Pilots/Recombination Rate/All-eggcount.csv")
@@ -83,6 +83,15 @@ merged_data <- all_phenotypes %>%
 #treatment key + merged_data
 merged_data <- merged_data %>%
   left_join(treatment_key, by = "VialID")
+
+#sum the total of same class (same Genotype and sex)of each vialId and brood in one 
+#(REMOVING DATES,NOTES, source)
+
+merged_data <- merged_data %>%
+  select(-Date,-Source, -Notes, ) %>%  # Remove the date column
+  group_by(across(-Count)) %>%  # Group by all columns except Count
+  summarise(Count = sum(Count, na.rm = TRUE), .groups = "drop")
+
 # Save merged_data as CSV
 write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_data_output.csv")
 
