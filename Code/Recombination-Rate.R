@@ -75,6 +75,15 @@ egg_count <- egg_count %>%
     Egg_sumcount = as.numeric(Egg_sumcount),
     VialID = as.character(VialID)
   )
+#reading the female in cross (for egg per female)
+femalescross <- read_csv("../Raw Data/Pilots/Recombination Rate/Femaleinvial.csv")
+colnames(femalescross)
+
+femalescross <- femalescross %>%
+  rename(VialID = `Vial ID`)
+
+femalescross <- femalescross %>%
+  mutate( VialID = as.character(VialID) )
 
 # Merge egg count + data 
 merged_data <- all_phenotypes %>%
@@ -84,6 +93,10 @@ merged_data <- all_phenotypes %>%
 merged_data <- merged_data %>%
   left_join(treatment_key, by = "VialID")
 
+#femalescross+ merged_data
+merged_data <- merged_data %>%
+  left_join(femalescross, c("VialID", "Brood"))
+
 #sum the total of same class (same Genotype and sex)of each vialId and brood in one 
 #(REMOVING DATES,NOTES, source)
 
@@ -92,12 +105,37 @@ merged_data <- merged_data %>%
   group_by(across(-Count)) %>%  # Group by all columns except Count
   summarise(Count = sum(Count, na.rm = TRUE), .groups = "drop")
 
+# creating the egg per female column
+merged_data$Eggperfemale <- merged_data$Egg_sumcount / merged_data$Female
+
 # Save merged_data as CSV
 write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_data_output.csv")
 
+
+####create the total adult count
+merged_data<- merged_data %>%
+  group_by(VialID, Brood) %>%
+  mutate(total_adult = sum(Count, na.rm = TRUE)) %>%
+  ungroup()
+###Filter rows where egg-sumcount is less than total_adult 
+
+  merged_problematic <- merged_data %>%
+  filter(Egg_sumcount < total_adult) %>%
+  select(VialID, Brood, Egg_sumcount, total_adult) %>%
+  distinct()
+
+write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_problematic.csv")
+  
+#cleaning this vials that have more adults that they should be 
+
+merged_clean<- merged_data %>%
+anti_join(merged_problematic, by = c("VialID", "Brood"))
+  
+
+
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-######tOotal scored flies
+######total scored flies
 total_scored <- sum(merged_data$Count, na.rm = TRUE)
 print(total_scored)
 
