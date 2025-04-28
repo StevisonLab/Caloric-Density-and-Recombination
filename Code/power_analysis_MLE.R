@@ -2,7 +2,7 @@
 
 # Set working directory
 ##setwd("~/Desktop/local_temperature")
-setwd("~/GitHub/Caloric-Density-and-Recombination/Code")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Code") 
 
 
 # Install and load packages "tidyverse", "magrittr", "dplyr", and "emmeans"
@@ -10,6 +10,7 @@ library(tidyverse)
 library(magrittr)
 library(dplyr)
 library(emmeans)
+library(ggplot2)
 
 # Must load custom function for Likelihood Calculation
 # For diagram and variable names conventions please see pdf                              
@@ -718,4 +719,41 @@ map_length_emmeans_table <- emmeans(linear_model_estimated_map_length, specs = p
 contrast(map_length_emmeans_table, method="pairwise")
 write.csv(map_length_anova_table,"../Statistical Analysis/map_length_anova_table.csv",row.names = TRUE)
 write.csv(map_length_emmeans_table,"../Statistical Analysis/map_length_emmeans_table.csv",row.names = TRUE)
+
+# Calculate percent of total deviance
+total_deviance <- sum(map_length_anova_table$Deviance, na.rm = TRUE)
+map_length_anova_table$Percent_Explained <- round((map_length_anova_table$Deviance / total_deviance) * 100, 2)
+
+# Calculate p-values
+map_length_anova_table$P_value <- pchisq(map_length_anova_table$Deviance, 
+                                         df = map_length_anova_table$Df, 
+                                         lower.tail = FALSE)
+
+# Flag significant terms
+map_length_anova_table$Significance <- ifelse(map_length_anova_table$P_value < 0.05, "Significant", "Not Significant")
+
+# Plot deviance explained
+ggplot(map_length_anova_table, aes(x = reorder(Term, -Percent_Explained), 
+                                   y = Percent_Explained, fill = Significance)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(Percent_Explained, "%")), vjust = -0.5) +
+  scale_fill_manual(values = c("Significant" = "tomato", "Not Significant" = "gray70")) +
+  theme_minimal() +
+  labs(title = "Percent Deviance Explained by Each Term",
+       x = "Model Term", y = "Percent Deviance Explained") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# === emmeans Visualization ===
+# === Pairwise Contrasts (Significance Summary) ===
+ 
+# Extract contrasts object correctly
+pairwise_contrasts <- map_length_emmeans_table$contrasts
+pairwise_summary <- summary(pairwise_contrasts)
+
+# Optional: Filter and view only significant comparisons
+sig_contrasts <- subset(as.data.frame(pairwise_summary), p.value < 0.05)
+print(sig_contrasts)
+
+# Optional: Save significant contrasts
+write.csv(sig_contrasts, "../Statistical Analysis/significant_pairwise_contrasts.csv", row.names = FALSE)
 
