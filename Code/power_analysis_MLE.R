@@ -669,7 +669,7 @@ for(entry in 1:length(initial_dataset)){
                                         fn = Recombination.Fraction.Likelihood,
                                         gr = NULL,
                                         method = "Nelder-Mead", 
-                                        control = list(maxit = 100, #up to 10k previously
+                                        control = list(maxit = 10000, #up to 10k previously
                                                        alpha = 2.0,
                                                        beta = 0.25,
                                                        gamma = 4.0))
@@ -710,7 +710,7 @@ df$recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf
 df$GB<-as.character(df$GB) 
 
 df=df[,c("vialID","Brood","diet","GB","recombination_fractions")]
-
+write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 
 linear_model_estimated_map_length <- glm(formula =  recombination_fractions ~ diet*GB*Brood, data = df)
 map_length_anova_table <- anova(linear_model_estimated_map_length)
