@@ -11,6 +11,8 @@ library(magrittr)
 library(dplyr)
 library(emmeans)
 library(ggplot2)
+library(tidyr)
+
 
 # Must load custom function for Likelihood Calculation
 # For diagram and variable names conventions please see pdf                              
@@ -706,6 +708,26 @@ df<-MLE_analyzed_dataset_temperature
 df <- separate(df, col = treatment, into = c("diet", "GB"), sep = "_")
 df <- separate(df, col = vial, into = c("vialID", "Brood"), sep = "_")
 
+# 2. Define vialIDs to exclude (I have not set this vials)
+excluded_vials <- c(12, 13, 25, 26, 30, 31, 44, 46)
+
+# 3. Create the full set of expected combinations (excluding those vialIDs)
+all_combinations <- expand.grid(
+  Brood = LETTERS[1:7],         # A to G
+  vialID = setdiff(1:48, excluded_vials)  # exclude these
+)
+
+# 4. Find missing combinations by comparing all_combinations to actual DF
+missing_combinations <- anti_join(all_combinations, df, by = c("Brood", "vialID"))
+
+# 5. Optional: find duplicates in DF
+duplicates <- df %>%
+  group_by(Brood, vialID) %>%
+  filter(n() > 1)
+
+# 6. Output
+#write.csv(duplicates, "Duplication.csv")
+#write.csv(missing_combinations, "missing_combinations.csv")
 
 df$recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf_1 + MLE_analyzed_dataset_temperature$estimated_rf_2 + MLE_analyzed_dataset_temperature$estimated_rf_3 + MLE_analyzed_dataset_temperature$estimated_rf_4 + MLE_analyzed_dataset_temperature$estimated_rf_5)
 df$GB<-as.character(df$GB) 
@@ -719,41 +741,4 @@ map_length_emmeans_table <- emmeans(linear_model_estimated_map_length, specs = p
 contrast(map_length_emmeans_table, method="pairwise")
 write.csv(map_length_anova_table,"../Statistical Analysis/map_length_anova_table.csv",row.names = TRUE)
 write.csv(map_length_emmeans_table,"../Statistical Analysis/map_length_emmeans_table.csv",row.names = TRUE)
-
-# Calculate percent of total deviance
-total_deviance <- sum(map_length_anova_table$Deviance, na.rm = TRUE)
-map_length_anova_table$Percent_Explained <- round((map_length_anova_table$Deviance / total_deviance) * 100, 2)
-
-# Calculate p-values
-map_length_anova_table$P_value <- pchisq(map_length_anova_table$Deviance, 
-                                         df = map_length_anova_table$Df, 
-                                         lower.tail = FALSE)
-
-# Flag significant terms
-map_length_anova_table$Significance <- ifelse(map_length_anova_table$P_value < 0.05, "Significant", "Not Significant")
-
-# Plot deviance explained
-ggplot(map_length_anova_table, aes(x = reorder(Term, -Percent_Explained), 
-                                   y = Percent_Explained, fill = Significance)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0(Percent_Explained, "%")), vjust = -0.5) +
-  scale_fill_manual(values = c("Significant" = "tomato", "Not Significant" = "gray70")) +
-  theme_minimal() +
-  labs(title = "Percent Deviance Explained by Each Term",
-       x = "Model Term", y = "Percent Deviance Explained") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# === emmeans Visualization ===
-# === Pairwise Contrasts (Significance Summary) ===
- 
-# Extract contrasts object correctly
-pairwise_contrasts <- map_length_emmeans_table$contrasts
-pairwise_summary <- summary(pairwise_contrasts)
-
-# Optional: Filter and view only significant comparisons
-sig_contrasts <- subset(as.data.frame(pairwise_summary), p.value < 0.05)
-print(sig_contrasts)
-
-# Optional: Save significant contrasts
-write.csv(sig_contrasts, "../Statistical Analysis/significant_pairwise_contrasts.csv", row.names = FALSE)
 
