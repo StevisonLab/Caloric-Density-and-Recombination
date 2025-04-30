@@ -713,9 +713,9 @@ df$GB<-as.character(df$GB)
 df=df[,c("vialID","Brood","diet","GB","recombination_fractions")]
 write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 
-linear_model_estimated_map_length <- glm(formula =  recombination_fractions ~ diet*GB*Brood, data = df)
+linear_model_estimated_map_length <- glm(formula =  recombination_fractions ~ diet*GB, data = df)
 map_length_anova_table <- anova(linear_model_estimated_map_length)
-map_length_emmeans_table <- emmeans(linear_model_estimated_map_length, specs = pairwise ~ diet, by=c("GB","Brood"), mode="kenward-roger")
+map_length_emmeans_table <- emmeans(linear_model_estimated_map_length, specs = pairwise ~ diet, by=c("GB"), mode="kenward-roger")
 contrast(map_length_emmeans_table, method="pairwise")
 write.csv(map_length_anova_table,"../Statistical Analysis/map_length_anova_table.csv",row.names = TRUE)
 write.csv(map_length_emmeans_table,"../Statistical Analysis/map_length_emmeans_table.csv",row.names = TRUE)
