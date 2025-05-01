@@ -283,6 +283,7 @@ survival_summary <- merged_data %>%
 
 ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 developmental`)) +
   geom_boxplot() +
+  ylim(0, 1) +
   theme_minimal() +
   labs(
     title = "Survival Rate by Treatment",
@@ -294,6 +295,7 @@ ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 de
   geom_boxplot(outlier.shape = NA, alpha = 0.7) +  # cleaner boxplot
   geom_jitter(width = 0.2, alpha = 0.5, color = "black") +  # adds points
   facet_wrap(~ `F1 Genotype`, scales = "free_y") +  # one plot per genotype
+  ylim(0, 1) +
   theme_minimal(base_size = 14) +
   labs(
     title = "Survival Rate by Treatment and Genotype",
@@ -439,4 +441,173 @@ anova_m <- aov(male_survival ~ `F1 developmental`, data = survival_399)
 summary(anova_m)
 TukeyHSD(anova_m)
 
+#____________________________
+# survival   0.5x, 1.0x, and 2.0x
+#_______________________________
+# Filter data
+survival_filtered_multi <- merged_data %>%
+  filter(`F1 Genotype` %in% c(42, 217, 391, 399, 491),
+         `F1 developmental` %in% c("0.5x", "1.0x", "2.0x"))
 
+# Calculate survival with dead split across sexes
+survival_multi <- survival_filtered_multi %>%
+  group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
+  summarise(
+    live_F = sum(Count[Sex == "F"], na.rm = TRUE),
+    live_M = sum(Count[Sex == "M"], na.rm = TRUE),
+    dead = sum(Count[is.na(Sex)], na.rm = TRUE),
+    Egg_Count = first(as.numeric(Egg_sumcount)),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    dead_half = dead / 2,
+    adjusted_F = live_F + dead_half,
+    adjusted_M = live_M + dead_half,
+    expected_per_sex = Egg_Count / 2,
+    female_survival = pmin(adjusted_F / expected_per_sex, 1),
+    male_survival = pmin(adjusted_M / expected_per_sex, 1)
+  )
+
+# Convert to long format
+survival_long_multi <- survival_multi %>%
+  select(`F1 developmental`, `F1 Genotype`, female_survival, male_survival) %>%
+  pivot_longer(cols = c(female_survival, male_survival),
+               names_to = "Sex", values_to = "Survival") %>%
+  mutate(Sex = ifelse(Sex == "female_survival", "Female", "Male"))
+
+# Combined plot
+ggplot(survival_long_multi, aes(x = `F1 developmental`, y = Survival, fill = Sex)) +
+  geom_boxplot(position = position_dodge(width = 0.75), alpha = 0.7) +
+  facet_wrap(~ `F1 Genotype`) +
+  labs(
+    title = "Survival Rate by Treatment, Genotype, and Sex",
+    x = "Food Treatment",
+    y = "Survival Rate"
+  ) +
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  scale_fill_manual(values = c("Female" = "#F0899C", "Male" = "lightblue")) +
+  theme(
+    legend.position = "top",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold")
+  )
+
+# Female-only plot
+ggplot(survival_multi, aes(x = `F1 developmental`, y = female_survival, fill = `F1 developmental`)) +
+  geom_boxplot(alpha = 0.7) +
+  facet_wrap(~ `F1 Genotype`) +
+  labs(
+    title = "Female Survival Rate by Treatment and Genotype",
+    x = "Food Treatment",
+    y = "Female Survival Rate"
+  ) +
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "RdPu") +
+  theme(legend.position = "none")
+
+# Male-only plot
+ggplot(survival_multi, aes(x = `F1 developmental`, y = male_survival, fill = `F1 developmental`)) +
+  geom_boxplot(alpha = 0.7) +
+  facet_wrap(~ `F1 Genotype`) +
+  labs(
+    title = "Male Survival Rate by Treatment and Genotype",
+    x = "Food Treatment",
+    y = "Male Survival Rate"
+  ) +
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "Blues") +
+  theme(legend.position = "none")
+
+# Optional: Run ANOVA for each sex across genotypes (not faceted)
+anova_f_multi <- aov(female_survival ~ `F1 developmental` * `F1 Genotype`, data = survival_multi)
+summary(anova_f_multi)
+
+anova_m_multi <- aov(male_survival ~ `F1 developmental` * `F1 Genotype`, data = survival_multi)
+summary(anova_m_multi)
+
+#____________________________
+#Survival 1x
+#____________________________
+
+# Filter for 1.0x treatment and selected genotypes
+survival_filtered_1x <- merged_data %>%
+  filter(`F1 developmental` == "1.0x")
+
+# Calculate survival with dead split across sexes
+survival_1x <- survival_filtered_1x %>%
+  group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
+  summarise(
+    live_F = sum(Count[Sex == "F"], na.rm = TRUE),
+    live_M = sum(Count[Sex == "M"], na.rm = TRUE),
+    dead = sum(Count[is.na(Sex)], na.rm = TRUE),
+    Egg_Count = first(as.numeric(Egg_sumcount)),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    dead_half = dead / 2,
+    adjusted_F = live_F + dead_half,
+    adjusted_M = live_M + dead_half,
+    expected_per_sex = Egg_Count / 2,
+    female_survival = pmin(adjusted_F / expected_per_sex, 1),
+    male_survival = pmin(adjusted_M / expected_per_sex, 1)
+  )
+
+# Convert to long format
+survival_long_1x <- survival_1x %>%
+  select(`F1 developmental`, `F1 Genotype`, female_survival, male_survival) %>%
+  pivot_longer(cols = c(female_survival, male_survival),
+               names_to = "Sex", values_to = "Survival") %>%
+  mutate(Sex = ifelse(Sex == "female_survival", "Female", "Male"))
+
+# Combined plot
+ggplot(survival_long_1x, aes(x = `F1 Genotype`, y = Survival, fill = Sex)) +
+  geom_boxplot(position = position_dodge(width = 0.75), alpha = 0.7) +
+  labs(
+    title = "Survival Rate by Genotype and Sex (1.0x Treatment)",
+    x = "Genotype",
+    y = "Survival Rate"
+  ) +
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  scale_fill_manual(values = c("Female" = "#F0899C", "Male" = "lightblue")) +
+  theme(
+    legend.position = "top",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold")
+  )
+
+# Female-only plot
+ggplot(survival_1x, aes(x = `F1 Genotype`, y = female_survival, fill = factor(`F1 Genotype`))) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Female Survival Rate by Genotype (1.0x Treatment)",
+    x = "Genotype",
+    y = "Female Survival Rate"
+  ) +
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "RdPu") +
+  theme(legend.position = "none")
+
+# Male-only plot
+ggplot(survival_1x, aes(x = `F1 Genotype`, y = male_survival, fill = factor(`F1 Genotype`))) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Male Survival Rate by Genotype (1.0x Treatment)",
+    x = "Genotype",
+    y = "Male Survival Rate"
+  ) +
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "Blues") +
+  theme(legend.position = "none")
+
+# ANOVAs (female & male survival)
+anova_f_1x <- aov(female_survival ~ `F1 Genotype`, data = survival_1x)
+summary(anova_f_1x)
+
+anova_m_1x <- aov(male_survival ~ `F1 Genotype`, data = survival_1x)
+summary(anova_m_1x)
