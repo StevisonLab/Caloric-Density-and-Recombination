@@ -11,6 +11,9 @@ library(tidyr)
 library(lme4)
 library(lmerTest) # For p-values in mixed models
 library(emmeans)  # For post-hoc tests
+library(emmeans)
+library(multcompView)  # For cld()
+
 
 # SetWD
 #Laurie version
@@ -111,30 +114,28 @@ merged_data$Eggperfemale <- merged_data$Egg_sumcount / merged_data$Female
 # Save merged_data as CSV
 write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_data_output.csv")
 
+#________________________________________________________________________________
+#                             survival>1        create the total adult count
+#_______________________________________________________________________________
 
-####create the total adult count
 merged_data<- merged_data %>%
   group_by(VialID, Brood) %>%
   mutate(total_adult = sum(Count, na.rm = TRUE)) %>%
   ungroup()
+
 ###Filter rows where egg-sumcount is less than total_adult 
 
-  merged_problematic <- merged_data %>%
+merged_problematic <- merged_data %>%
   filter(Egg_sumcount < total_adult) %>%
-  select(VialID, Brood, Egg_sumcount, total_adult) %>%
+  dplyr::select(VialID, Brood, Egg_sumcount, total_adult) %>%
   distinct()
 
-write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_problematic.csv")
-  
-#cleaning this vials that have more adults that they should be 
-
-merged_clean<- merged_data %>%
-anti_join(merged_problematic, by = c("VialID", "Brood"))
+#write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_problematic.csv")
   
 
-
-#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+#_____________________________________________________________________________
+#                                             General
+#______________________________________________________________________________
 ######total scored flies
 total_scored <- sum(merged_data$Count, na.rm = TRUE)
 print(total_scored)
@@ -149,6 +150,7 @@ initials_count <- merged_data %>%
 
 # Print the result
 print(initials_count)
+
 ####how many crossover each individual has counted??
 total_crossovers_per_initial <- merged_data %>%
   mutate(Count = as.numeric(Count)) %>%
@@ -173,125 +175,90 @@ crossover_counts_per_initial <- merged_data %>%
   summarise(Total_Count = sum(Count, na.rm = TRUE), .groups = "drop")
 
 print(crossover_counts_per_initial)
-#################################################################
-###how many egg in each treatment:
-# Prepare and join treatment info
-egg_with_treatment<- egg_count %>%
-  left_join(treatment_key, by = "VialID") %>%
-  mutate(
-    Egg_sumcount = as.numeric(Egg_sumcount),
-    Brood = as.factor(Brood),
-    `F1 developmental` = as.factor(`F1 developmental`)
-  )
+                
+#_______________________________________________________________________________________
+#                                               Fecundity
+#_______________________________________________________________________________________
 
-# Create faceted boxplot across Broods
-ggplot(egg_with_treatment, aes(x = `F1 developmental`, y = Egg_sumcount, fill = `F1 developmental`)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
-  geom_jitter(width = 0.2, size = 1.8, alpha = 0.5) +
-  facet_wrap(~ Brood, scales = "free_y") +
-  theme_minimal(base_size = 14) +
-  labs(
-    title = "Egg Counts by Food Treatment Across Broods",
-    x = "Food Treatment",
-    y = "Egg Count"
-  ) +
-  theme(
-    strip.text = element_text(face = "bold"),
-    legend.position = "none"
-  )
-################################################################
-##### day of ecolsion in different broods 
-# Summarize data
-summary_counts <- merged_data %>%
-  group_by(Date, Brood, `F1 developmental`) %>%
-  summarise(mean_count = mean(Count, na.rm = TRUE), .groups = "drop")
+###how many egg per female in each treatment
 
-# Line plot of mean counts over time
-ggplot(summary_counts, aes(x = Date, y = mean_count, color = `F1 developmental`, group = `F1 developmental`)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 2) +
-  facet_wrap(~ Brood, scales = "free_y") +
-  theme_minimal(base_size = 14) +
-  labs(
-    title = "Mean Progeny Count Over Time by Brood and Food Treatment",
-    x = "Scoring Date",
-    y = "Mean Progeny Count"
-  ) +
-  theme(strip.text = element_text(face = "bold"))
-
-geom_smooth(method = "loess", se = FALSE)
-
-# Convert to Date if needed
-all$ScoringDate <- as.Date(all$ScoDate)
-
-# Create a day number column
-all <- all %>%
-  group_by(Brood) %>%  # Optional: reset Day 1 per brood
-  mutate(DayNum = as.integer(ScoringDate - min(ScoringDate)) + 1) %>%
+fecundity_data <- merged_data %>%
+  group_by(VialID, Brood) %>%
+  mutate(fecundity = Egg_sumcount / Female) %>%
+  slice(1) %>%
+  dplyr::select(VialID, Brood,`F1 Genotype`, `F1 developmental`, fecundity) %>%
   ungroup()
-ggplot(all, aes(x = DayNum, y = ProgenyCount, color = `F1 developmental`)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = FALSE) +
-  facet_wrap(~ Brood) +
-  labs(x = "Days After First Scoring", y = "Progeny Count")
 
+# 3. ANOVA
+anova_model_Fecundity<- aov(fecundity ~ `F1 Genotype` * `F1 developmental`, data = fecundity_data)
+summary(anova_model_Fecundity)
 
-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-########++++++++++++++++++Statistic RR+++++++++##################
+#Estimated marginal means and CLD
+emm_Fecundity <- emmeans(anova_model_Fecundity, ~ `F1 Genotype` * `F1 developmental`)
+cld_Fecundity <- cld(emm_Fecundity, Letters = letters)
+print(cld_Fecundity)
 
-# Data processing
-rr_summary <- merged_data %>%
-  filter(`crossover Classification` %in% c("Single Crossover", "Double Crossover", "Triple Crossover", "Non-Crossover")) %>% 
-  group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`, `crossover Classification`) %>%
-  summarise(TotalCount = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop") %>%
-  pivot_wider(names_from = `crossover Classification`, values_from = TotalCount, values_fill = 0) %>%
-  mutate(
-    Total = `Single Crossover` + `Double Crossover` + `Non-Crossover` + `Triple Crossover`, 
-    Recombinant = `Single Crossover` + `Double Crossover` + `Triple Crossover`,  
-    RR = Recombinant / Total
-  )
+#Box plot $ diet
+ggplot(fecundity_data, aes(x = `F1 developmental`, y = fecundity, fill = `F1 Genotype`)) +
+  geom_boxplot() +
+  labs(title = "Fecundity by Treatment and Genotype",
+       x = "Treatment",
+       y = "Fecundity (Eggs per Female)") +
+  theme_minimal()
 
-# Convert variables to factors
-rr_summary <- rr_summary %>%
-  mutate(
-    `F1.developmental` = as.factor(`F1.developmental`),
-    `F1.Genotype` = as.factor(`F1.Genotype`),
-    Brood = as.factor(Brood)
-  )
+#Box plot $ GB
+ggplot(fecundity_data, aes(x = `F1 Genotype`, y = fecundity, fill = `F1 developmental`)) +
+  geom_boxplot() +
+  labs(title = "Fecundity by Treatment and Genotype",
+       x = "Treatment",
+       y = "Fecundity (Eggs per Female)") +
+  theme_minimal()
+#_______________________
+#         399
+#________________________
+# Genotype 399 
+fecundity_data_399 <- fecundity_data %>%
+  filter(`F1 Genotype` == 399 )
 
-# Make column names syntactically valid
-names(rr_summary) <- make.names(names(rr_summary))
+# Box plot: fecundity for Genotype 399 with 0.5x, 1x, and 2x treatments
+ggplot(fecundity_data_399, aes(x = `F1 developmental`, y = fecundity, fill = `F1 developmental`)) +
+  geom_boxplot() +
+  labs(title = "Fecundity for Genotype 399 by Treatment",
+       x = "Treatment (F1 Developmental)",
+       y = "Fecundity (Eggs per Female)") +
+  theme_minimal()
+#_______________________
+#   0.5x, 1.0x, and 2.0x
+#________________________
+# Subset data for Treatments 0.5x, 1.0x, and 2.0x
+fecundity_data_3diet <- fecundity_data %>%
+  filter(`F1 developmental` %in% c("0.5x", "1.0x", "2.0x") & `F1 Genotype` %in% c(42, 217, 391, 399, 491),)
 
-# Mixed-effects model with Brood as random effect
-mixed_model <- lmer(RR ~ F1.developmental * F1.Genotype + (1 | Brood), data = rr_summary)
+# Box plot: with 0.5x, 1x, and 2x treatments
+ggplot(fecundity_data_3diet, aes(x = `F1 developmental`, y = fecundity, fill = `F1 Genotype`)) +
+  geom_boxplot() +
+  labs(title = "Fecundity for 3 diet by Treatment",
+       x = "Treatment (F1 Developmental)",
+       y = "Fecundity (Eggs per Female)") +
+  theme_minimal()
+#_______________________
+#            1x
+#________________________
+# Subset data for Treatment 1x
+fecundity_data_1x <- fecundity_data %>%
+  filter(`F1 developmental` == "1.0x")
 
-# Summary of the model
-summary(mixed_model)
+# Box plot: only for 1.0x treatment across selected genotypes
+ggplot(fecundity_data_1x, aes(x = as.factor(`F1 Genotype`), y = fecundity, fill = as.factor(`F1 Genotype`))) +
+  geom_boxplot() +
+  labs(title = "Fecundity for Genotypes under 1.0x Treatment",
+       x = "F1 Genotype",
+       y = "Fecundity (Eggs per Female)") +
+  theme_minimal()
+#_____________________________________________________________________________________
+#                                          Survival
+#______________________________________________________________________________________
 
-# Post-hoc tests for fixed effects (if significant)
-# For F1.Genotype
-emmeans(mixed_model, pairwise ~ F1.Genotype, adjust = "tukey")
-
-# For F1.developmental (uncomment if needed)
-# emmeans(mixed_model, pairwise ~ F1.developmental, adjust = "tukey")
-
-# Visualization
-ggplot(rr_summary, aes(x = F1.developmental, y = RR, fill = Brood)) +
-  geom_boxplot(position = position_dodge()) +
-  facet_wrap(~ F1.Genotype) +
-  theme_minimal(base_size = 14) +
-  labs(title = "Recombination Rate by Treatment, Genotype, and Brood")
-
-
-
-############RR###################
-#grouping based on the class for RR
-
-all_phenotypes_summary <- all_phenotypes %>%
-  group_by(Brood, VialID, Class) %>%
-  summarise(TotalCount = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop")
-
-############ZL###################
 #Calculate survival
 survival_summary <- merged_data %>%
   group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
