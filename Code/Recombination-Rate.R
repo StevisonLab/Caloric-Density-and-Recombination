@@ -114,24 +114,6 @@ merged_data$Eggperfemale <- merged_data$Egg_sumcount / merged_data$Female
 # Save merged_data as CSV
 write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_data_output.csv")
 
-#________________________________________________________________________________
-#                             survival>1        create the total adult count
-#_______________________________________________________________________________
-
-merged_data<- merged_data %>%
-  group_by(VialID, Brood) %>%
-  mutate(total_adult = sum(Count, na.rm = TRUE)) %>%
-  ungroup()
-
-###Filter rows where egg-sumcount is less than total_adult 
-
-merged_problematic <- merged_data %>%
-  filter(Egg_sumcount < total_adult) %>%
-  dplyr::select(VialID, Brood, Egg_sumcount, total_adult) %>%
-  distinct()
-
-#write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_problematic.csv")
-  
 
 #_____________________________________________________________________________
 #                                             General
@@ -255,29 +237,48 @@ ggplot(fecundity_data_1x, aes(x = as.factor(`F1 Genotype`), y = fecundity, fill 
        x = "F1 Genotype",
        y = "Fecundity (Eggs per Female)") +
   theme_minimal()
+#________________________________________________________________________________
+#                             survival>1    create the total adult count
+#_______________________________________________________________________________
+
+merged_data<- merged_data %>%
+  group_by(VialID, Brood) %>%
+  mutate(total_adult = sum(Count, na.rm = TRUE)) %>%
+  ungroup()
+
+###Filter rows where egg-sumcount is less than total_adult 
+
+merged_problematic <- merged_data %>%
+  filter(Egg_sumcount < total_adult) %>%
+  dplyr::select(VialID, Brood, Egg_sumcount, total_adult) %>%
+  distinct()
+
+#write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_problematic.csv")
+
+
 #_____________________________________________________________________________________
 #                                          Survival
 #______________________________________________________________________________________
 
-#Calculate survival
+#Calculate survival alive +dead
+
 survival_summary <- merged_data %>%
   group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
   summarise(
     # Sum Count where Sex is not NA (alive)
     FemaleMale = sum(Count[!is.na(Sex)], na.rm = TRUE),
-    
     # Sum Count where Sex is NA (dead)
     dead = sum(Count[is.na(Sex)], na.rm = TRUE),
-    
     # Egg count per vial
     Egg_Count = first(as.numeric(Egg_sumcount)),
-    
     .groups = 'drop'
   ) %>%
   mutate(
     Total_Count = FemaleMale + dead,
-    Survival = Total_Count / Egg_Count
+    Survival = Total_Count / Egg_Count,
+    Survival = if_else(Survival > 1, 1, Survival)  # Cap Survival at 1
   )
+
 # Plot by treatment!
 
 ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 developmental`)) +
@@ -304,8 +305,9 @@ ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 de
     strip.background = element_rect(fill = "#f0f0f0"),
     strip.text = element_text(face = "bold")
   )
+#___________________________________________________
 #########zl by sex f+half dead ############## M+HALF OF DEAD
-
+#__________________________________________________
 survival_sex_summary <- merged_data %>%
   group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
   summarise(
@@ -323,23 +325,20 @@ survival_sex_summary <- merged_data %>%
     adjusted_M = live_M + dead_per_sex,
     
     expected_sex = Egg_Count / 2,
-    
-    Survival_F = adjusted_F / expected_sex,
-    Survival_M = adjusted_M / expected_sex
+    Survival_F = pmin(adjusted_F / expected_sex, 1), #not bigger than 1
+    Survival_M = pmin(adjusted_M / expected_sex, 1)
   )
-
-######PLOT
-
-# Convert to long format for ggplot
+# Convert to long format for plotting
 survival_long <- survival_sex_summary %>%
-  select(`F1 developmental`, `F1 Genotype`, Survival_F, Survival_M) %>%
+  dplyr::select(`F1 developmental`, `F1 Genotype`, Survival_F, Survival_M) %>%
   pivot_longer(cols = c(Survival_F, Survival_M), names_to = "Sex", values_to = "Survival") %>%
   mutate(Sex = ifelse(Sex == "Survival_F", "Female", "Male"))
+
 
 # Plot
 ggplot(survival_long, aes(x = `F1 developmental`, y = Survival, fill = Sex)) +
   geom_boxplot(position = position_dodge(width = 0.8)) +
-  facet_wrap(~ `F1 Genotype`, scales = "free_y") +
+  facet_wrap(~ `F1 Genotype`) +
   theme_minimal(base_size = 14) +
   labs(
     title = "Survival by Treatment, Genotype, and Sex",
@@ -347,12 +346,16 @@ ggplot(survival_long, aes(x = `F1 developmental`, y = Survival, fill = Sex)) +
     y = "Survival Rate"
   ) +
   scale_fill_manual(values = c("Female" = "#F0899C", "Male" = "lightblue")) +
+  ylim(0, 1) +  # this line sets the y-axis from 0 to 1
   theme(
     strip.background = element_rect(fill = "#f0f0f0"),
     strip.text = element_text(face = "bold")
   )
 
-#######################survival ship of only in 399 f+half of the dead //////////// M+half of the dead
+#________________________
+# survival 399 => half F and M
+#________________________
+
 # Filter for genotype 399
 survival_filtered <- merged_data %>%
   filter(`F1 Genotype` == "399")
@@ -372,14 +375,18 @@ survival_399 <- survival_filtered %>%
     adjusted_F = live_F + dead_half,
     adjusted_M = live_M + dead_half,
     expected_per_sex = Egg_Count / 2,
-    female_survival = adjusted_F / expected_per_sex,
-    male_survival = adjusted_M / expected_per_sex
+    female_survival = pmin(adjusted_F / expected_per_sex, 1),
+    male_survival = pmin(adjusted_M / expected_per_sex, 1)#not bigger than 1
   )
-# For general use with ggplot and facetting by sex
+
+# Convert to long format for combined plot
 survival_long_399 <- survival_399 %>%
   select(`F1 developmental`, female_survival, male_survival) %>%
-  pivot_longer(cols = c(female_survival, male_survival), names_to = "Sex", values_to = "Survival") %>%
+  pivot_longer(cols = c(female_survival, male_survival),
+               names_to = "Sex", values_to = "Survival") %>%
   mutate(Sex = ifelse(Sex == "female_survival", "Female", "Male"))
+
+# Combined plot (female + male)
 ggplot(survival_long_399, aes(x = `F1 developmental`, y = Survival, fill = Sex)) +
   geom_boxplot(position = position_dodge(width = 0.75), alpha = 0.7) +
   labs(
@@ -387,6 +394,7 @@ ggplot(survival_long_399, aes(x = `F1 developmental`, y = Survival, fill = Sex))
     x = "Food Treatment",
     y = "Survival Rate"
   ) +
+  ylim(0, 1) +
   theme_minimal(base_size = 14) +
   scale_fill_manual(values = c("Female" = "#F0899C", "Male" = "lightblue")) +
   theme(
@@ -394,7 +402,8 @@ ggplot(survival_long_399, aes(x = `F1 developmental`, y = Survival, fill = Sex))
     strip.background = element_rect(fill = "#f0f0f0"),
     strip.text = element_text(face = "bold")
   )
-###plot seprate F 399
+
+# Female-only plot
 ggplot(survival_399, aes(x = `F1 developmental`, y = female_survival, fill = `F1 developmental`)) +
   geom_boxplot(alpha = 0.7) +
   labs(
@@ -402,11 +411,12 @@ ggplot(survival_399, aes(x = `F1 developmental`, y = female_survival, fill = `F1
     x = "Food Treatment",
     y = "Female Survival Rate"
   ) +
+  ylim(0, 1) +
   theme_minimal(base_size = 14) +
   scale_fill_brewer(palette = "RdPu") +
   theme(legend.position = "none")
 
-### plot seprate M
+# Male-only plot
 ggplot(survival_399, aes(x = `F1 developmental`, y = male_survival, fill = `F1 developmental`)) +
   geom_boxplot(alpha = 0.7) +
   labs(
@@ -414,18 +424,19 @@ ggplot(survival_399, aes(x = `F1 developmental`, y = male_survival, fill = `F1 d
     x = "Food Treatment",
     y = "Male Survival Rate"
   ) +
+  ylim(0, 1) +
   theme_minimal(base_size = 14) +
   scale_fill_brewer(palette = "Blues") +
   theme(legend.position = "none")
 
-
-# Female survival ANOVA
+# ANOVA - Female
 anova_f <- aov(female_survival ~ `F1 developmental`, data = survival_399)
 summary(anova_f)
 TukeyHSD(anova_f)
 
-# Male survival ANOVA
+# ANOVA - Male
 anova_m <- aov(male_survival ~ `F1 developmental`, data = survival_399)
 summary(anova_m)
 TukeyHSD(anova_m)
+
 
