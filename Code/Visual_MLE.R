@@ -56,6 +56,16 @@ cld_399 <- cld(emm_399, Letters = letters)
 ggplot(data=df_399,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()
 ggplot(data=df_399,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()+ facet_wrap(~Brood)
 
+ggplot(df, aes(x = Brood, y = recombination_fractions, group = diet, color = diet)) +
+  stat_summary(fun = mean, geom = "line", size = 1) +             # Line plot with mean values
+  stat_summary(fun = mean, geom = "point", size = 2) +            # Points on the line
+  labs(
+    title = "Recombination Fractions by Brood and Diet",
+    x = "Brood",
+    y = "Recombination Fraction",
+    color = "Diet"
+  ) +
+  theme_minimal()
 
 #____________________________________________
 #                       all that have 0.5x 1x 2x diets only 42,217,391,399,491
