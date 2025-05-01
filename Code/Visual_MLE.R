@@ -11,6 +11,8 @@ library(multcompView)
 library(multcomp)
 library(lme4)
 library(lmerTest)
+library(broom)
+
  # 2. Set as factors
  df$GB<- as.factor(df$GB)
  
@@ -18,6 +20,10 @@ library(lmerTest)
  anova_model<- aov(recombination_fractions ~ Brood * diet* GB, data = df)
  summary(anova_model)
  
+# Tidy the ANOVA model and save to CSV
+anova_summary <- tidy(anova_model)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/anova_model.csv", row.names = FALSE)
+
  # 4. Post hoc Tukey
  TukeyHSD(anova_model)
  
@@ -27,7 +33,18 @@ library(lmerTest)
  
  # 6. Visualization
  ggplot(data=df,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()
- ggplot(data=df,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()+ facet_wrap(~Brood)
+ ggplot(data=df,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()+ facet_wrap(~GB)
+ ggplot(df, aes(x = Brood, y = recombination_fractions, group = diet, color = diet)) +
+   stat_summary(fun = mean, geom = "line", size = 1) +             # Line plot with mean values
+   stat_summary(fun = mean, geom = "point", size = 2) +            # Points on the line
+   labs(
+     title = "Recombination Fractions by Brood and Diet",
+     x = "Brood",
+     y = "Recombination Fraction",
+     color = "Diet"
+   ) +
+   theme_minimal()
+ 
 
 
 #_______________________________________________
@@ -56,7 +73,7 @@ cld_399 <- cld(emm_399, Letters = letters)
 ggplot(data=df_399,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()
 ggplot(data=df_399,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()+ facet_wrap(~Brood)
 
-ggplot(df, aes(x = Brood, y = recombination_fractions, group = diet, color = diet)) +
+ggplot(df_399, aes(x = Brood, y = recombination_fractions, group = diet, color = diet)) +
   stat_summary(fun = mean, geom = "line", size = 1) +             # Line plot with mean values
   stat_summary(fun = mean, geom = "point", size = 2) +            # Points on the line
   labs(
@@ -72,18 +89,19 @@ ggplot(df, aes(x = Brood, y = recombination_fractions, group = diet, color = die
 #_____________________________________________
 
 # 1. Filter genotypes and diets of interest
-df_1X <- df %>%
+
+df_3diet <- df %>%
   filter(
     GB %in% c(42, 217, 391, 399, 491),
     diet %in% c("0.5x", "1.0x", "2.0x")
     )
 
 # 2. Set Brood and diet as factors
-df_1X$Brood <- as.factor(df_1X$Brood)
-df_1X$diet <- as.factor(df_1X$diet)
+df_3diet$Brood <- as.factor(df_3diet$Brood)
+df_3diet$diet <- as.factor(df_3diet$diet)
 
 # 3. Run ANOVA
-anova_model <- aov(recombination_fractions ~ Brood * diet, data = df_1X)
+anova_model <- aov(recombination_fractions ~ Brood * diet, data = df_3diet)
 summary(anova_model)
 
 # 4. Post hoc Tukey test
@@ -96,49 +114,52 @@ cld_results <- cld(emm, Letters = letters)
 # 6. Visualization
 
 # Boxplot by diet
-ggplot(data = df_1X, aes(x = diet, y = recombination_fractions, color = diet)) +
+ggplot(data = df_3diet, aes(x = diet, y = recombination_fractions, color = diet)) +
   geom_boxplot() +
   theme_minimal()
 
 # Boxplot faceted by Brood
-ggplot(data = df_1X, aes(x = diet, y = recombination_fractions, color = diet)) +
-  geom_boxplot() +
-  facet_wrap(~Brood) +
-  theme_minimal()
-
-#box plot of genotype
-#ggplot(data = df_1X, aes(x = diet, y = recombination_fractions, color = diet)) +
+ggplot(data = df_3diet, aes(x = diet, y = recombination_fractions, color = diet)) +
   geom_boxplot() +
   facet_wrap(~GB) +
-  theme_minimal() +
-  labs(title = "Recombination Fractions by Diet and Genotype",
-       x = "Diet", y = "Recombination Fraction")
+  theme_minimal()
 
-ggplot(data = df_1X, aes(x = as.factor(GB), y = recombination_fractions, fill = diet)) +
+ggplot(data = df_3diet, aes(x = as.factor(GB), y = recombination_fractions, fill = diet)) +
   geom_boxplot(position = position_dodge()) +
   theme_minimal() +
   labs(title = "Recombination Fractions by Genotype and Diet",
        x = "Genotype (GB)", y = "Recombination Fraction")
 
 
+ggplot(df_3diet, aes(x = Brood, y = recombination_fractions, group = diet, color = diet)) +
+  stat_summary(fun = mean, geom = "line", size = 1) +             # Line plot with mean values
+  stat_summary(fun = mean, geom = "point", size = 2) +            # Points on the line
+  labs(
+    title = "Recombination Fractions by Brood and Diet",
+    x = "Brood",
+    y = "Recombination Fraction",
+    color = "Diet"
+  ) +
+  facet_wrap(~GB) +
+  theme_minimal()
 
 #____________________________________________________________________
 #    only 1x
 #___________________________________________________________________
 # 1. Filter 1X  
-df_1X <- df %>%
+df_1x <- df %>%
   filter(
     diet %in% c("1.0x")
   )
 
 # 2. Set Brood and diet as factors
-df_1X$Brood <- as.factor(df_1X$Brood)
-df_1X$diet <- as.factor(df_1X$diet)
-df_1X$GB <- as.factor(df_1X$GB)
+df_1x$Brood <- as.factor(df_1x$Brood)
+df_1x$diet <- as.factor(df_1x$diet)
+df_1x$GB <- as.factor(df_1x$GB)
 
 
 # 3. Run ANOVA
-anova_model <- aov(recombination_fractions ~ Brood * GB, data = df_1X)
+anova_model <- aov(recombination_fractions ~ Brood * GB, data = df_1x)
 summary(anova_model)
 
 # 4. Post hoc Tukey test
@@ -151,13 +172,27 @@ cld_results <- cld(emm, Letters = letters)
 # 6. Visualization
 
 # Boxplot by gb
-ggplot(data = df_1X, aes(x = GB, y = recombination_fractions, color = GB)) +
+ggplot(data = df_1x, aes(x = GB, y = recombination_fractions, color = GB)) +
   geom_boxplot() +
   theme_minimal()
 
 # Boxplot faceted by Brood
-ggplot(data = df_1X, aes(x = GB, y = recombination_fractions, color = GB)) +
+ggplot(data = df_1x, aes(x = GB, y = recombination_fractions, color = GB)) +
   geom_boxplot() +
   facet_wrap(~Brood) +
   theme_minimal()
+
+
+ggplot(df_1x, aes(x = Brood, y = recombination_fractions, group = diet, color = diet)) +
+  stat_summary(fun = mean, geom = "line", size = 1) +             # Line plot with mean values
+  stat_summary(fun = mean, geom = "point", size = 2) +            # Points on the line
+  labs(
+    title = "Recombination Fractions by Brood and Diet",
+    x = "Brood",
+    y = "Recombination Fraction",
+    color = "Diet"
+  ) +
+  facet_wrap(~GB) +
+  theme_minimal()
+
 
