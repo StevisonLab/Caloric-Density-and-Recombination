@@ -1,8 +1,7 @@
 #_______________________________________________
 # 0. Reading the data
 #_______________________________________________
-
- df <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv")
+df <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv")
 
 # Load necessary libraries
 library(ggplot2)
@@ -12,6 +11,24 @@ library(multcompView)
 library(multcomp)
 library(lme4)
 library(lmerTest)
+ # 2. Set as factors
+ df$GB<- as.factor(df$GB)
+ 
+ # 3. ANOVA
+ anova_model<- aov(recombination_fractions ~ Brood * diet* GB, data = df)
+ summary(anova_model)
+ 
+ # 4. Post hoc Tukey
+ TukeyHSD(anova_model)
+ 
+ # 5. Estimated marginal means and CLD
+ emm <- emmeans(anova_model, ~ Brood * diet* GB)
+ cld <- cld(emm, Letters = letters)
+ 
+ # 6. Visualization
+ ggplot(data=df,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()
+ ggplot(data=df,aes(x=diet,y=recombination_fractions, color=diet))+geom_boxplot()+ facet_wrap(~Brood)
+
 
 #_______________________________________________
 #                        399 with  6 treatmemt
