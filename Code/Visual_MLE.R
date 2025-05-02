@@ -2,6 +2,10 @@
 # 0. Reading the data
 #_______________________________________________
 df <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv")
+observer <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Recombination Rate/observer.csv")
+
+df <- df %>%
+  left_join(observer, by = "VialID")
 
 # Load necessary libraries
 library(ggplot2)
@@ -99,16 +103,17 @@ df_3diet <- df %>%
 # 2. Set Brood and diet as factors
 df_3diet$Brood <- as.factor(df_3diet$Brood)
 df_3diet$diet <- as.factor(df_3diet$diet)
+df_3diet$GB = as.factor(df_3diet$GB)
 
 # 3. Run ANOVA
-anova_model <- aov(recombination_fractions ~ Brood * diet, data = df_3diet)
+anova_model <- aov(recombination_fractions ~ Brood * diet* GB, data = df_3diet)
 summary(anova_model)
 
 # 4. Post hoc Tukey test
 TukeyHSD(anova_model)
 
 # 5. Estimated marginal means and compact letter display (CLD)
-emm <- emmeans(anova_model, ~ Brood * diet)
+emm <- emmeans(anova_model, ~ GB* diet)
 cld_results <- cld(emm, Letters = letters)
 
 # 6. Visualization
