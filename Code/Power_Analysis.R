@@ -70,7 +70,7 @@ ES_491=ES[13:15,"emmean"]
 ## First run the power analysis using only 3 strains and 3 diets: ----
 
 mu_vector = c(ES_399, #estimates for 399 from model
-       ES_491, #estimates for 491 from model
+      ES_491, #estimates for 491 from model
        ES_42) #estimates for 42 from model
 sd_value = sqrt(354.01)    # from Spencer's experiments
 
@@ -85,7 +85,7 @@ for (i in seq_along(sample_sizes)) {
     n = current_n,
     mu = mu_vector,
     sd = sd_value,
-    labelnames = c("group", "g1", "g2", "g3", "treatment", "t1", "t2", "t3")
+    labelnames = c("group", "g1", "g2","g3", "treatment", "t1", "t2", "t3")
   )
   
   result <- ANOVA_power(design, alpha_level = 0.05, nsims = 500, verbose = FALSE)
@@ -107,6 +107,7 @@ loess_fit <- loess(interaction_powers ~ sample_sizes, span = 0.4)
 lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 
 # GxE with only 3 diets and three strains is achievable with at least 8 vials per combo which is 82% power (72 vials). 
+# GxE with only 3 diets (0.5x,1x,2.0x) and two strains (42,399) is achievable with at least 7 vials per combo which is 84% power (42 vials). 
 
 ##  So, what if we were to increase # strains or the number of diets. Let's test out number of diets first: -----
 
@@ -185,8 +186,9 @@ for (i in seq_along(sample_sizes)) {
 
 }
 
-
-#Ok, no luck there! What if we went big and did MORE gb and more diets?
+# Based on this, we had 16.6% power with only 2 replicates per combo to detect a significant GxE
+# With 9 replicates per treatment/diet, we could have significant GxE (135 vials) at 85.6% power
+# What if we went big and did MORE gb and more diets?
 
 mu_vector = c(86.7,101.0, 98.3,102.3,92.1,96.0, #estimates for 399 from model
               102.5,104.8,104.8,104.8,104.8,95.7, #estimates for 491 from model with control values for intermediates 
@@ -264,7 +266,7 @@ lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 
 # remove 2.0x:
 mu_vector = c(86.7,101.0, 98.3,102.3,92.1, #estimates for 399 from model
-              102.5,104.8,104.8,102.5431,100.2681, #estimates for 491 from model with control values for intermediates 
+             # 102.5,103.6834,104.8,102.5431,100.2681, #estimates for 491 from model with intermediates as step function
               109.5,100.95,92.4,85.27,78.13) #estimates for 42 from model assuming a linear step function
 sd_value = sqrt(354.01)    # from Spencer's experiments
 
@@ -305,6 +307,46 @@ lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 # GxE is with 4 diets (no 2.0x or 0.5x) and 2 strains is NOT achievable with 15 replicates.
 # GxE is with 5 diets (no 2.0x) and 2 strains is achievable with 9 replicates getting 81.8% power (90 vials).
 # GxE is with 5 diets (no 2.0x) and 3 strains is achievable with 10 replicates getting 83% power (150 vials).
+
+# Whot if we removed the more extreme diets where we alter the agar?:
+
+# remove 2x and add 1.5x:
+mu_vector = c(86.7,98.3,92.1, #estimates for 399 from model
+#              102.5,104.8,100.2681, #estimates for 491 from model 
+              109.5,92.4,78.13) #estimates for 42 from model 
+#              96.7,100.1,93.51729, #estimates for 391 from model
+#              119.9,105.8,103.0145) #estimates for 217 from model
+sd_value = sqrt(354.01)    # from Spencer's experiments
+
+
+sample_sizes <- seq(2, 15, by = 1)
+interaction_powers <- numeric(length(sample_sizes))
+
+for (i in seq_along(sample_sizes)) {
+  current_n <- sample_sizes[i]
+  
+  design <- ANOVA_design(
+    design = "2b*3b",
+    n = current_n,
+    mu = mu_vector,
+    sd = sd_value,
+    labelnames = c("group", "g1", "g2",  "treatment", "t1", "t2","t3")
+  )
+  
+  result <- ANOVA_power(design, alpha_level = 0.05, nsims = 500, verbose = FALSE)
+  
+  interaction_powers[i] <- result$main_results$power[3]
+  cat("n =", current_n, "→ Interaction Power =", interaction_powers[i], "\n")
+  
+  
+}
+
+# For only 1x vs 2x even with 5 GB and 15+ replicates we would not reach >80% power 
+# For only 0.5x vs 1x we would need 5 GB and 15 replicates to reach 83.2% power 
+# If we did 0.5x,1x, and 1.5x with 5 GBs, then we would need 11 replicates to reach 81.8% power (165 vials)
+# If we did 0.5x,1x, and 1.5x with only 3 GBs, we would need 12 replicates to reach 85% power (108 vials)
+# If we did 0.5x,1x, and 1.5x with only 2 GBs, we would need 11 replicates to reach 84.6% power (66 vials)
+
 
 
 # Sim R Power Analysis (does NOT work!!) ----------------------------------------------------
