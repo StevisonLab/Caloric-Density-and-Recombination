@@ -65,6 +65,8 @@ df_399$diet <- as.factor(df_399$diet)
 # 3. ANOVA
 anova_model_399 <- aov(recombination_fractions ~ Brood * diet, data = df_399)
 summary(anova_model_399)
+anova_summary <- tidy(anova_model_399)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/RR-399anova_model.csv", row.names = FALSE)
 
 # 4. Post hoc Tukey
 TukeyHSD(anova_model_399)
@@ -108,6 +110,8 @@ df_3diet$GB = as.factor(df_3diet$GB)
 # 3. Run ANOVA
 anova_model <- aov(recombination_fractions ~ Brood * diet* GB, data = df_3diet)
 summary(anova_model)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/anova_model5genotype.csv",row.names = FALSE)
+
 
 # 4. Post hoc Tukey test
 TukeyHSD(anova_model)
@@ -164,8 +168,10 @@ df_1x$GB <- as.factor(df_1x$GB)
 
 
 # 3. Run ANOVA
-anova_model <- aov(recombination_fractions ~ Brood * GB, data = df_1x)
-summary(anova_model)
+anova_model1X <- aov(recombination_fractions ~ Brood * GB, data = df_1x)
+summary(anova_model1X)
+anova_summary <- tidy(anova_model1X)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/RR-1Xanova_model.csv", row.names = FALSE)
 
 # 4. Post hoc Tukey test
 TukeyHSD(anova_model)

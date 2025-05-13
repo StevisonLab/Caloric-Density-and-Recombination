@@ -180,6 +180,7 @@ cld_Fecundity <- cld(emm_Fecundity, Letters = letters)
 print(cld_Fecundity)
 
 #Box plot $ diet
+
 ggplot(fecundity_data, aes(x = `F1 developmental`, y = fecundity, fill = `F1 Genotype`)) +
   geom_boxplot() +
   labs(title = "Fecundity by Treatment and Genotype",
@@ -279,6 +280,14 @@ survival_summary <- merged_data %>%
     Survival = if_else(Survival > 1, 1, Survival)  # Cap Survival at 1
   )
 
+# ANOVA
+anova_model<- aov(Survival ~ Brood * `F1 developmental`*  `F1 Genotype`, data = survival_summary)
+summary(anova_model)
+
+# Tidy the ANOVA model and save to CSV
+anova_summary <- tidy(anova_model)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/survival_anova_model.csv", row.names = FALSE)
+
 # Plot by treatment!
 
 ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 developmental`)) +
@@ -315,6 +324,14 @@ ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 de
 # Filter for genotype 399
 survival_399 <- survival_summary %>%
   filter(`F1 Genotype` == 399)
+# ANOVA
+anova_model<- aov(Survival ~ Brood * `F1 developmental`, data = survival_399)
+summary(anova_model)
+
+# Tidy the ANOVA model and save to CSV
+anova_summary <- tidy(anova_model)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/survival_399_anova_model.csv", row.names = FALSE)
+
 
 ggplot(survival_399, aes(x = `F1 developmental`, y = Survival, fill = `F1 developmental`)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.7) +
@@ -334,6 +351,16 @@ ggplot(survival_399, aes(x = `F1 developmental`, y = Survival, fill = `F1 develo
 survival_filtered_multi <- survival_summary %>%
   filter(`F1 Genotype` %in% c(42, 217, 391, 399, 491),
          `F1 developmental` %in% c("0.5x", "1.0x", "2.0x"))
+
+# ANOVA
+anova_model<- aov(Survival ~ Brood * `F1 developmental`*  `F1 Genotype`, data = survival_filtered_multi)
+summary(anova_model)
+
+# Tidy the ANOVA model and save to CSV
+anova_summary <- tidy(anova_model)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/survival5geno_anova_model.csv", row.names = FALSE)
+
+
 # plot treatment & Genotype
 ggplot(survival_filtered_multi, aes(x = `F1 developmental`, y = Survival, fill = `F1 developmental`)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.7) +  # cleaner boxplot
@@ -358,6 +385,14 @@ ggplot(survival_filtered_multi, aes(x = `F1 developmental`, y = Survival, fill =
 # Filter for only 1.0x treatment
 survival_1x <- survival_summary %>%
   filter(`F1 developmental` == "1.0x")
+# ANOVA
+anova_model<- aov(Survival ~ Brood *`F1 Genotype`, data = survival_filtered_multi)
+summary(anova_model)
+
+# Tidy the ANOVA model and save to CSV
+anova_summary <- tidy(anova_model)
+write.csv(anova_summary, "~/GitHub/Caloric-Density-and-Recombination/Statistical Analysis/survival1x_anova_model.csv", row.names = FALSE)
+
 
 # Plot survival by genotype for 1.0x
 ggplot(survival_1x, aes(x = factor(`F1 Genotype`), y = Survival, fill = factor(`F1 Genotype`))) +
@@ -485,4 +520,23 @@ ggplot(survival_1x_sex, aes(x = `F1 Genotype`, y = Survival, fill = Sex)) +
   scale_fill_manual(values = sex_colors) +
   ylim(0, 1)
 
+#____________________________________
+# fecundity by survival 399 only
+#___________________________________
+#combine 
+combined_399 <- survival_399 %>%
+  left_join(fecundity_data_399, c("VialID", "Brood"))
+
+# Plot
+ggplot(combined_399, aes(x = fecundity, y = Survival, color = `F1 developmental.x`)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Fecundity vs Survival for Genotype 399",
+    x = "Fecundity (Eggs per Female)",
+    y = "Survival Rate",
+    color = "Treatment"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
 
