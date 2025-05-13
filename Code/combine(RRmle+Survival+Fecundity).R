@@ -13,6 +13,7 @@ library(emmeans)    # For post-hoc tests
 library(ggpubr)     # For publication-ready plots
 library(car)        # For ANOVA diagnostics
 library(MASS)       # For robust regression (if needed)
+library(multcomp)
 
 
 
@@ -212,6 +213,60 @@ p3 <- ggplot(dataset_clean, aes(Survival, recombination_fraction, color = F1.Gen
   geom_smooth(method = "lm") +
   labs(x = "Survival", y = "Recombination Fraction")
 
+#p3 <- ggplot(dataset_clean, aes(Survival, recombination_fraction)) +
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  labs(x = "Survival", y = "Recombination Fraction")
+
 # Arrange plots
 ggarrange(p1, p2, p3, ncol = 3, widths = c(1, 1.2, 1))
 
+
+#___________________
+#Color by Diet 
+p3_diet <- ggplot(dataset_clean, 
+                  aes(x = Survival, 
+                      y = recombination_fraction, 
+                      color = F1.developmental,    # Color by diet
+                      group = F1.developmental)) + # Group by diet
+  geom_point(alpha = 0.6) +                       # Semi-transparent points
+  geom_smooth(method = "lm", se = TRUE) +          # Add regression lines with CI
+  labs(x = "Survival", 
+       y = "Recombination Fraction",
+       color = "Diet") +                          # Better legend title
+  theme_minimal() +
+  scale_color_viridis_d()                          # Colorblind-friendly palette
+
+print(p3_diet)
+
+#Facet by Diet 
+p3_faceted <- ggplot(dataset_clean, 
+                     aes(x = Survival, 
+                         y = recombination_fraction, 
+                         color = F1.Genotype)) +   # Color by genotype
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +         # Simpler lines without CI
+  facet_wrap(~ F1.developmental) +                 # Separate panels by diet
+  labs(x = "Survival", 
+       y = "Recombination Fraction",
+       color = "Genotype") +
+  theme_bw()
+
+print(p3_faceted)
+
+#Diet-Specific Interactions
+p3_interaction <- ggplot(dataset_clean, 
+                         aes(x = Survival, 
+                             y = recombination_fraction,
+                             color = F1.Genotype,
+                             linetype = F1.developmental)) +  # Diet as linetype
+ 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Survival", 
+       y = "Recombination Fraction",
+       color = "Genotype",
+       linetype = "Diet") +
+  scale_color_brewer(palette = "Set1") +           # Distinct colors
+  theme_minimal()
+
+print(p3_interaction)
