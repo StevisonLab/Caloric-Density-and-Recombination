@@ -578,9 +578,9 @@ entries <- left_join(extra_info, entries, by = c("VialID", "Brood"))
 # Add viability columns manually with value 1
 entries <- entries %>%
   mutate(
-    mean_treatment_marker_free_viability = 1,
-    mean_treatment_female_marker_free_viability = 1,
-    mean_treatment_male_marker_free_viability = 1,
+    mean_treatment_marker_free_viability = 0.83,
+    mean_treatment_female_marker_free_viability = 0.83,
+    mean_treatment_male_marker_free_viability = 0.83,
   )
 #adding unkown (dead) to the adult count
 entries <- entries %>%
@@ -700,7 +700,7 @@ for(entry in 1:length(initial_dataset)){
   MLE_analyzed_dataset_temperature <- rbind(MLE_analyzed_dataset_temperature, output)
 }
 
-write.csv(MLE_analyzed_dataset_temperature,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
+write.csv(MLE_analyzed_dataset_temperature,"Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv",row.names = TRUE)
 
 df<-MLE_analyzed_dataset_temperature
 
