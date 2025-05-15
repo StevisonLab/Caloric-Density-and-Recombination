@@ -31,7 +31,9 @@ df <- read.csv("../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv"
 df_3diet <- df %>%
   filter(
     GB %in% c(42, 217, 391, 399, 491),
-    diet %in% c("0.5x", "1.0x", "2.0x")
+    diet %in% c("0.5x", "1.0x", "2.0x"),
+    vialID != 7  # This excludes vial 7
+    
   )
 
 
@@ -73,7 +75,12 @@ ES_491=ES[13:15,"emmean"]
 mu_vector = c(ES_399, #estimates for 399 from model
       ES_491, #estimates for 491 from model
        ES_42) #estimates for 42 from model
-sd_value = sqrt(354.01)    # from Spencer's experiments
+#sd_value = sqrt(354.01)    # from Spencer's experiments
+
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
+
 
 sample_sizes <- seq(2, 15, by = 1)
 interaction_powers <- numeric(length(sample_sizes))

@@ -730,7 +730,8 @@ duplicates <- df %>%
 
 #deleting the duplication in the data
 # Remove rows where column X is 1, 2, 3, or 142
-df <- df[!(df$X %in% c(1, 2, 3, 142)), ]
+#df <- df[!(df$X %in% c(1, 2, 3, 142)), ]
+#df <- df[!(df$X %in% c(139)), ]
 #write.csv(MLE_analyzed_dataset_temperature,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv",row.names = TRUE)
@@ -739,8 +740,13 @@ write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv",r
 df$recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf_1 + MLE_analyzed_dataset_temperature$estimated_rf_2 + MLE_analyzed_dataset_temperature$estimated_rf_3 + MLE_analyzed_dataset_temperature$estimated_rf_4 + MLE_analyzed_dataset_temperature$estimated_rf_5)
 df$GB<-as.character(df$GB) 
 
+df$recombination_fractions <- 100*(df$estimated_rf_1 + df$estimated_rf_2 + df$estimated_rf_3 + df$estimated_rf_4 + df$estimated_rf_5)
+df$GB<-as.character(df$GB) 
+
 df=df[,c("vialID","Brood","diet","GB","recombination_fractions")]
 write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
+write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv",row.names = TRUE)
+
 
 linear_model_estimated_map_length <- glm(formula =  recombination_fractions ~ diet*GB, data = df)
 map_length_anova_table <- anova(linear_model_estimated_map_length)
