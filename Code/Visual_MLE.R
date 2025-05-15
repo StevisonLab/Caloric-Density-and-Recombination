@@ -3,6 +3,7 @@
 #_______________________________________________
 df <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv")
 observer <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Recombination Rate/observer.csv")
+df <- read.csv("~/GitHub/Caloric-Density-and-Recombination/Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv")
 
 df <- df %>%
   left_join(observer, by = "VialID")

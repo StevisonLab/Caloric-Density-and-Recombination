@@ -25,6 +25,7 @@ library(lmerTest)
 library(Superpower)
 
 df <- read.csv("Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv")
+df <- read.csv("../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv")
 
 #start with a subset of strains and diets
 df_3diet <- df %>%

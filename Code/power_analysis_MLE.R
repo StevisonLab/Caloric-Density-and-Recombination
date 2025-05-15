@@ -733,6 +733,7 @@ duplicates <- df %>%
 df <- df[!(df$X %in% c(1, 2, 3, 142)), ]
 #write.csv(MLE_analyzed_dataset_temperature,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
 write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv",row.names = TRUE)
+write.csv(df,"../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv",row.names = TRUE)
 
 
 df$recombination_fractions <- 100*(MLE_analyzed_dataset_temperature$estimated_rf_1 + MLE_analyzed_dataset_temperature$estimated_rf_2 + MLE_analyzed_dataset_temperature$estimated_rf_3 + MLE_analyzed_dataset_temperature$estimated_rf_4 + MLE_analyzed_dataset_temperature$estimated_rf_5)
