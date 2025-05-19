@@ -32,9 +32,9 @@ df_3diet <- df %>%
   filter(
     GB %in% c(42, 217, 391, 399, 491),
     diet %in% c("0.5x", "1.0x", "2.0x"),
-    vialID != 7  # This excludes vial 7
-    
+    !(Brood == "D" & vialID == 7)  # Exclude vial 7 only in Brood D
   )
+
 
 
 # Step 0: Ensure factors are set correctly
@@ -115,6 +115,43 @@ loess_fit <- loess(interaction_powers ~ sample_sizes, span = 0.4)
 lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 
 # GxE with only 3 diets and three strains is achievable with at least 8 vials per combo which is 82% power (72 vials). 
+mu_vector = c(ES_399,  # estimates for 399 from model
+              ES_42)   # estimates for 42 from model
+
+sample_sizes <- seq(2, 20, by = 1)
+interaction_powers <- numeric(length(sample_sizes))
+
+for (i in seq_along(sample_sizes)) {
+  current_n <- sample_sizes[i]
+  
+  design <- ANOVA_design(
+    design = "2b*3b",  # 2 groups (399 and 42), 3 treatments
+    n = current_n,
+    mu = mu_vector,
+    sd = sd_value,
+    labelnames = c("group", "g1", "g3",  # g1 = 399, g3 = 42 (skip g2 to avoid confusion with 491)
+                   "treatment", "t1", "t2", "t3")
+  )
+  
+  result <- ANOVA_power(design, alpha_level = 0.05, nsims = 500, verbose = FALSE)
+  
+  interaction_powers[i] <- result$main_results$power[3]
+  cat("n =", current_n, "→ Interaction Power =", interaction_powers[i], "\n")
+}
+
+# Clean up: remove NAs just in case
+valid_idx <- !is.na(interaction_powers)
+plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
+     type = "b", pch = 19, col = "blue",
+     xlab = "Sample Size per Cell",
+     ylab = "Power (Interaction: group × treatment)",
+     main = "Power Curve for Interaction Effect")
+abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
+
+loess_fit <- loess(interaction_powers ~ sample_sizes, span = 0.4)
+lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
+
+
 # GxE with only 3 diets (0.5x,1x,2.0x) and two strains (42,399) is achievable with at least 7 vials per combo which is 84% power (42 vials). 
 
 ##  So, what if we were to increase # strains or the number of diets. Let's test out number of diets first: -----
