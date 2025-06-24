@@ -25,7 +25,7 @@ library(lmerTest)
 library(Superpower)
 
 df <- read.csv("Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets.csv")
-df <- read.csv("../Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv")
+df <- read.csv("Raw Data/Pilots/Pilot_MLE_analyzed_dataset_diets_updated.csv")
 
 #start with a subset of strains and diets
 df_3diet <- df %>%
@@ -70,7 +70,7 @@ ES_391=ES[7:9,"emmean"]
 ES_399=ES[10:12,"emmean"]
 ES_491=ES[13:15,"emmean"]
 
-## First run the power analysis using only 3 strains and 3 diets: ----
+## First run the power analysis using only 3 strains and 3 diets (399,491,42|0.5X,1X,2X): ----
 
 mu_vector = c(ES_399, #estimates for 399 from model
       ES_491, #estimates for 491 from model
@@ -114,7 +114,8 @@ abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
 loess_fit <- loess(interaction_powers ~ sample_sizes, span = 0.4)
 lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 
-# GxE with only 3 diets and three strains is achievable with at least 8 vials per combo which is 82% power (72 vials). 
+#GxE with only 3 diets and three strains is achievable with at least 8 vials per combo which is 82% power (72 vials). 
+##
 mu_vector = c(ES_399,  # estimates for 399 from model
               ES_42)   # estimates for 42 from model
 
@@ -153,14 +154,110 @@ lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 
 
 # GxE with only 3 diets (0.5x,1x,2.0x) and two strains (42,399) is achievable with at least 7 vials per combo which is 84% power (42 vials). 
+## power analysis using only 2strains and 3 diets (399,42|0.5X,1X,2X): ----
+mu_vector = c(ES_399,  # estimates for 399 from model
+              ES_42)   # estimates for 42 from model
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
 
+sample_sizes <- seq(2, 20, by = 1)
+interaction_powers <- numeric(length(sample_sizes))
+
+for (i in seq_along(sample_sizes)) {
+  current_n <- sample_sizes[i]
+  
+  design <- ANOVA_design(
+    design = "2b*3b",  # 2 groups (399 and 42), 3 treatments
+    n = current_n,
+    mu = mu_vector,
+    sd = sd_value,
+    labelnames = c("group", "g1", "g3",  # g1 = 399, g3 = 42 (skip g2 to avoid confusion with 491)
+                   "treatment", "t1", "t2", "t3")
+  )
+  
+  result <- ANOVA_power(design, alpha_level = 0.05, nsims = 500, verbose = FALSE)
+  
+  interaction_powers[i] <- result$main_results$power[3]
+  cat("n =", current_n, "→ Interaction Power =", interaction_powers[i], "\n")
+}
+
+# Clean up: remove NAs just in case
+valid_idx <- !is.na(interaction_powers)
+plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
+     type = "b", pch = 19, col = "blue",
+     xlab = "Sample Size per Cell",
+     ylab = "Power (Interaction: group × treatment)",
+     main = "Power Curve for Interaction Effect")
+abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
+
+loess_fit <- loess(interaction_powers ~ sample_sizes, span = 0.4)
+lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
+
+## power analysis using only 2strains and 2diets (399,42|0.5X2X): ----
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
+
+df_2diet <- df %>%
+  filter(
+    GB %in% c(42, 399),
+    diet %in% c("0.5x", "2.0x"),
+    !(Brood == "D" & vialID == 7)
+  )
+
+# Get only emmeans for diets 0.5x and 2.0x in 42 and 399
+ES_filtered <- summary(emmeans_table$emmeans) %>%
+  filter(diet %in% c("0.5x", "2.0x") & GB %in% c("399", "42"))
+
+# Check output
+print(ES_filtered)
+
+# Construct vector for power analysis
+mu_vector <- ES_filtered$emmean
+
+sample_sizes <- seq(2, 20, by = 1)
+interaction_powers <- numeric(length(sample_sizes))
+
+for (i in seq_along(sample_sizes)) {
+  current_n <- sample_sizes[i]
+  
+  design <- ANOVA_design(
+    design = "2b*2b",  # 2 strains × 2 diets
+    n = current_n,
+    mu = mu_vector,
+    sd = sd_value,
+    labelnames = c("group", "g1", "g2", "treatment", "t1", "t2")
+  )
+  
+  result <- ANOVA_power(design, alpha_level = 0.05, nsims = 500, verbose = FALSE)
+  
+  interaction_powers[i] <- result$main_results$power[3]
+  cat("n =", current_n, "→ Interaction Power =", interaction_powers[i], "\n")
+}
+
+# Clean up: remove NAs just in case
+valid_idx <- !is.na(interaction_powers)
+plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
+     type = "b", pch = 19, col = "blue",
+     xlab = "Sample Size per Cell",
+     ylab = "Power (Interaction: group × treatment)",
+     main = "Power Curve for Interaction Effect")
+abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
+
+loess_fit <- loess(interaction_powers ~ sample_sizes, span = 0.4)
+lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
+
+
+#N=13 ISS GIVING US 82.8 POWER
 ##  So, what if we were to increase # strains or the number of diets. Let's test out number of diets first: -----
 
 mu_vector = c(86.7,101.0, 98.3,102.3,92.1,96.0, #estimates for 399 from model
               102.5,104.8,104.8,104.8,104.8,95.7, #estimates for 491 from model with control values for intermediates
               109.5,100.95,92.4,85.27,78.13,71.8) #estimates for 42 from model with control values for intermediates
-sd_value = sqrt(354.01)    # from Spencer's experiments
-
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
 
 sample_sizes <- seq(2, 15, by = 1)
 interaction_powers <- numeric(length(sample_sizes))
@@ -206,8 +303,9 @@ mu_vector = c(86.7,98.3,96.0, #estimates for 399 from model
               109.5,92.4,71.8, #estimates for 42 from model 
               96.7,100.1,86.9, #estimates for 391 from model
               119.9,105.8,100.2) #estimates for 217 from model
-sd_value = sqrt(354.01)    # from Spencer's experiments
-
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
 
 sample_sizes <- seq(2, 15, by = 1)
 interaction_powers <- numeric(length(sample_sizes))
@@ -240,7 +338,6 @@ mu_vector = c(86.7,101.0, 98.3,102.3,92.1,96.0, #estimates for 399 from model
               109.5,100.95,92.4,85.27,78.13,71.8, #estimates for 42 from model assuming a linear step function
               96.7,98.4,100.1,95.7,91.3,86.9, #estimates for 391 from model assuming a linear step function
               119.9,112.85,105.8,103.93,102.1,100.2) #estimates for 217 from model assuming a linear step function
-sd_value = sqrt(354.01)    # from Spencer's experiments
 
 
 sample_sizes <- seq(5, 50, by = 5)
@@ -269,8 +366,9 @@ for (i in seq_along(sample_sizes)) {
 
 mu_vector = c(86.7,101.0, 98.3,102.3,92.1,96.0, #estimates for 399 from model
               109.5,100.95,92.4,85.27,78.13,71.8) #estimates for 42 from model assuming a linear step function
-sd_value = sqrt(354.01)    # from Spencer's experiments
-
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
 
 sample_sizes <- seq(2, 15, by = 1)
 interaction_powers <- numeric(length(sample_sizes))
@@ -313,9 +411,10 @@ lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 mu_vector = c(86.7,101.0, 98.3,102.3,92.1, #estimates for 399 from model
              # 102.5,103.6834,104.8,102.5431,100.2681, #estimates for 491 from model with intermediates as step function
               109.5,100.95,92.4,85.27,78.13) #estimates for 42 from model assuming a linear step function
-sd_value = sqrt(354.01)    # from Spencer's experiments
 
-
+# Calculate Root Mean Squared Error  (same as SD of residuals for power analysis purposes)
+rmse <- sqrt(mean(residuals(model)^2))
+sd_value <- rmse
 sample_sizes <- seq(2, 15, by = 1)
 interaction_powers <- numeric(length(sample_sizes))
 
@@ -361,7 +460,6 @@ mu_vector = c(86.7,98.3,92.1, #estimates for 399 from model
               109.5,92.4,78.13) #estimates for 42 from model 
 #              96.7,100.1,93.51729, #estimates for 391 from model
 #              119.9,105.8,103.0145) #estimates for 217 from model
-sd_value = sqrt(354.01)    # from Spencer's experiments
 
 
 sample_sizes <- seq(2, 15, by = 1)

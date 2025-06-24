@@ -100,7 +100,8 @@ ggplot(df_399, aes(x = Brood, y = recombination_fractions, group = diet, color =
 df_3diet <- df %>%
   filter(
     GB %in% c(42, 217, 391, 399, 491),
-    diet %in% c("0.5x", "1.0x", "2.0x")
+    diet %in% c("0.5x", "1.0x", "2.0x",
+                vialID != 7)
     )
 
 # 2. Set Brood and diet as factors
@@ -119,7 +120,7 @@ TukeyHSD(anova_model)
 
 # 5. Estimated marginal means and compact letter display (CLD)
 emm <- emmeans(anova_model, ~ GB* diet)
-cld_results <- cld(emm, Letters = letters)
+cld_results1 <- cld(emm, Letters = letters)
 
 # 6. Visualization
 
