@@ -156,6 +156,25 @@ crossover_counts_per_initial <- merged_data %>%
   summarise(Total_Count = sum(Count, na.rm = TRUE), .groups = "drop")
 
 print(crossover_counts_per_initial)
+
+#________________________________________
+# adult per strain per treatment
+#______________________________________
+
+adults_summary <- merged_data %>%
+  group_by(`F1 developmental`, `F1 Genotype`) %>%
+  summarise(total_adults = sum(Count, na.rm = TRUE)) %>%
+  ungroup()
+
+
+ggplot(adults_summary, aes(x = `F1 developmental`, y = total_adults, fill = as.factor(`F1 Genotype`))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  labs(title = "Adult Count per Diet and Genotype",
+       x = "F1 developmental",
+       y = "Mean Adult Count",
+       fill = "Genotype") +
+  theme_minimal()
+
                 
 #_______________________________________________________________________________________
 #                                               Fecundity

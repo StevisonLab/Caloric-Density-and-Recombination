@@ -14,6 +14,7 @@ library(ggpubr)     # For publication-ready plots
 library(car)        # For ANOVA diagnostics
 library(MASS)       # For robust regression (if needed)
 library(multcomp)
+library(broom)  # for tidy model summaries
 
 
 
@@ -270,3 +271,66 @@ p3_interaction <- ggplot(dataset_clean,
   theme_minimal()
 
 print(p3_interaction)
+
+
+#__________________________
+#slope of RR vs survival plotted against mean survival and fecundity per strain
+#__________________
+# Step 1: Fit separate linear models for each genotype and extract slope
+
+slopes_by_genotype <- dataset_clean %>%
+  group_by(F1.Genotype) %>%
+  do(tidy(lm(recombination_fraction ~ Survival, data = .))) %>%
+  ungroup() %>%
+  filter(term == "Survival") %>%
+  rename(Slope = estimate) %>%
+  dplyr::select(F1.Genotype, Slope)  # explicitly call dplyr::select
+
+# Step 2: Get mean survival and fecundity per genotype
+means_by_genotype <- dataset_clean %>%
+  group_by(F1.Genotype) %>%
+  summarise(
+    Mean_Survival = mean(Survival, na.rm = TRUE),
+    Mean_Fecundity = mean(fecundity, na.rm = TRUE)
+  )
+
+# Step 3: Merge slopes and means into one table
+summary_table <- left_join(slopes_by_genotype, means_by_genotype, by = "F1.Genotype")
+
+# View the summary table
+print(summary_table)
+
+# A. Slope vs. Mean Survival
+ggplot(summary_table, aes(x = Mean_Survival, y = Slope)) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed") +
+  geom_text(aes(label = F1.Genotype), vjust = -0.6, size = 4) +
+  labs(
+    title = "Slope of RR ~ Survival vs Mean Survival",
+    x = "Mean Survival",
+    y = "Slope (Recombination ~ Survival)"
+  ) +
+  theme_minimal()
+
+
+#🔹 B. Slope vs. Mean Fecundity
+ggplot(summary_table, aes(x = Mean_Fecundity, y = Slope)) +
+  geom_point(size = 3, color = "darkgreen") +
+  geom_smooth(method = "lm", se = TRUE, color = "black", linetype = "dashed") +
+  geom_text(aes(label = F1.Genotype), vjust = -0.6, size = 4) +
+  labs(
+    title = "Slope of RR ~ Survival vs Mean Fecundity",
+    x = "Mean Fecundity",
+    y = "Slope (Recombination ~ Survival)"
+  ) +
+  theme_minimal()
+
+
+#🔹 C. Optional: Color by one and plot the other
+lm_summary_surv <- lm(Slope ~ Mean_Survival, data = summary_table)
+summary(lm_summary_surv)
+
+lm_summary_fec <- lm(Slope ~ Mean_Fecundity, data = summary_table)
+summary(lm_summary_fec)
+
+
