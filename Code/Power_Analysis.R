@@ -106,7 +106,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
@@ -119,7 +119,7 @@ lines(sample_sizes, predict(loess_fit), col = "darkgreen", lwd = 2)
 mu_vector = c(ES_399,  # estimates for 399 from model
               ES_42)   # estimates for 42 from model
 
-sample_sizes <- seq(2, 20, by = 1)
+sample_sizes <- seq(12, 18, by = 1)
 interaction_powers <- numeric(length(sample_sizes))
 
 for (i in seq_along(sample_sizes)) {
@@ -144,7 +144,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
@@ -186,7 +186,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
@@ -240,7 +240,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
@@ -284,7 +284,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
@@ -395,7 +395,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
@@ -440,7 +440,7 @@ for (i in seq_along(sample_sizes)) {
 valid_idx <- !is.na(interaction_powers)
 plot(sample_sizes[valid_idx], interaction_powers[valid_idx],
      type = "b", pch = 19, col = "blue",
-     xlab = "Sample Size per Cell",
+     xlab = "Sample Size per Vial ",
      ylab = "Power (Interaction: group × treatment)",
      main = "Power Curve for Interaction Effect")
 abline(h = 0.8, col = "red", lty = 2)  # reference line for 80% power
