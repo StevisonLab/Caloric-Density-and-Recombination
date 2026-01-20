@@ -1,0 +1,96 @@
+{
+    "debugBreakpointsState": {
+        "breakpoints": [
+            {
+                "id": 0,
+                "path": "~/GitHub/Caloric-Density-and-Recombination/Code/counting_model.R",
+                "line_number": 358,
+                "function_steps": "",
+                "function_name": "toplevel",
+                "state": 1,
+                "editor_state": 1,
+                "editor_line_number": 358,
+                "is_pending_debug_completion": false,
+                "needs_updated_steps": false,
+                "type": 1,
+                "is_package_breakpoint": false,
+                "package_name": ""
+            },
+            {
+                "id": 1,
+                "path": "~/GitHub/Caloric-Density-and-Recombination/Code/counting_model.R",
+                "line_number": 336,
+                "function_steps": "",
+                "function_name": "toplevel",
+                "state": 1,
+                "editor_state": 1,
+                "editor_line_number": 336,
+                "is_pending_debug_completion": false,
+                "needs_updated_steps": false,
+                "type": 1,
+                "is_package_breakpoint": false,
+                "package_name": ""
+            },
+            {
+                "id": 2,
+                "path": "~/GitHub/Caloric-Density-and-Recombination/Code/counting_model.R",
+                "line_number": 329,
+                "function_steps": "",
+                "function_name": "Uniform.CxCoM.Likelihood",
+                "state": 2,
+                "editor_state": 2,
+                "editor_line_number": 329,
+                "is_pending_debug_completion": false,
+                "needs_updated_steps": false,
+                "type": 0,
+                "is_package_breakpoint": false,
+                "package_name": ""
+            },
+            {
+                "id": 3,
+                "path": "~/GitHub/Caloric-Density-and-Recombination/Code/counting_model.R",
+                "line_number": 235,
+                "function_steps": "",
+                "function_name": "Uniform.CxCoM.Likelihood",
+                "state": 2,
+                "editor_state": 2,
+                "editor_line_number": 235,
+                "is_pending_debug_completion": false,
+                "needs_updated_steps": false,
+                "type": 0,
+                "is_package_breakpoint": false,
+                "package_name": ""
+            },
+            {
+                "id": 4,
+                "path": "~/GitHub/Caloric-Density-and-Recombination/Code/counting_model.R",
+                "line_number": 213,
+                "function_steps": "",
+                "function_name": "Uniform.CxCoM.Likelihood",
+                "state": 2,
+                "editor_state": 2,
+                "editor_line_number": 213,
+                "is_pending_debug_completion": false,
+                "needs_updated_steps": false,
+                "type": 0,
+                "is_package_breakpoint": false,
+                "package_name": ""
+            },
+            {
+                "id": 5,
+                "path": "~/GitHub/Caloric-Density-and-Recombination/Code/counting_model.R",
+                "line_number": 167,
+                "function_steps": "",
+                "function_name": "Uniform.CxCoM.Likelihood",
+                "state": 2,
+                "editor_state": 2,
+                "editor_line_number": 167,
+                "is_pending_debug_completion": false,
+                "needs_updated_steps": false,
+                "type": 0,
+                "is_package_breakpoint": false,
+                "package_name": ""
+            }
+        ]
+    }
+}
