@@ -1,6 +1,6 @@
 #setwd("Raw Data/") # Please use Raw Data as working directory
 
-# RUN H3 ON VIAL, PERFORM REGRESSION
+# RUN H3 ON Cross, PERFORM REGRESSION------
 
 # Begin algorithm for fitting CxCoM H3 to individual vial dataset
 # Create matrix to store all optimized outputs of looped CxCoM.Likelihood.H3
@@ -410,7 +410,8 @@ cross_pooled_anova_anova.table <- anova(cross_pooled_anova.lm)
 write.csv(cross_pooled_anova_anova.table,"../Summaries and Outputs/table_S11_cross_pooled_anova.csv",row.names = TRUE)
 
 
-# RUN H3 on Brood
+# RUN H3 on Brood-----
+
 # Begin algorithm for fitting CxCoM H3 to individual vial dataset
 # Create matrix to store all optimized outputs of looped CxCoM.Likelihood.H3
 # Log likelihoods calculated for each combination of y & p model parameters

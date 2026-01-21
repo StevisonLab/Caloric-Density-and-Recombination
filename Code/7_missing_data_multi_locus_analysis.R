@@ -1,5 +1,6 @@
 #setwd("Raw Data/") # Please use Raw Data as working directory
 
+# H0 ------
 # Begin algorithm for fitting CxCoM H0 to full experiment dataset
 # Create matrix to store all optimized outputs of CxCoM.Likelihood.H0
 # Log likelihoods calculated for each combination of y & p model parameters
@@ -118,7 +119,7 @@ MLE_H0_full<-as.data.frame(MLE_H0_full_outputs)
 df0 <- MLE_H0_full[order(MLE_H0_full$lnL),]
 write.csv(df0,"../Summaries and Outputs/17_multi_locus_full_experiment_H0_mle_output.csv",row.names = TRUE)
 
-
+# H1 -------
 # Begin algorithm for fitting CxCoM H1 to full experiment dataset
 # Create matrix to store all optimized outputs of CxCoM.Likelihood.H1
 # Log likelihoods calculated for each combination of y & p model parameters
@@ -240,6 +241,7 @@ MLE_H1_full<-as.data.frame(MLE_H1_full_outputs)
 df1 <- MLE_H1_full[order(MLE_H1_full$lnL),]
 write.csv(df1,"../Summaries and Outputs/18_multi_locus_full_experiment_H1_mle_output.csv",row.names = TRUE)
 
+# H2 ---------------
 # Begin algorithm for fitting CxCoM H2 to full experiment dataset
 # Create matrix to store all optimized outputs of CxCoM.Likelihood.H2
 # Log likelihoods calculated for each combination of y & p model parameters
@@ -371,6 +373,7 @@ MLE_H2_full<-as.data.frame(MLE_H2_full_outputs)
 df2 <- MLE_H2_full[order(MLE_H2_full$lnL),]
 write.csv(df2,"../Summaries and Outputs/19_multi_locus_full_experiment_H2_mle_output.csv",row.names = TRUE)
 
+# H3 --------------
 # Begin algorithm for fitting CxCoM H3 to full experiment dataset
 # Create matrix to store all optimized outputs of CxCoM.Likelihood.H3
 # Log likelihoods calculated for each combination of y & p model parameters
@@ -508,3 +511,8 @@ for (v in 1:max_p_value) {
   MLE_H3_full_outputs <- rbind(MLE_H3_full_outputs, MLE_H3_outputs)
 }
 
+# Take output matrix MLE_Uniform_CxCoM and sort by likelihood
+# Print the sorted table for records, make sure to RENAME FILE
+MLE_H3_full<-as.data.frame(MLE_H3_full_outputs)
+df3 <- MLE_H3_full[order(MLE_H3_full$lnL),]
+write.csv(df3,"../Summaries and Outputs/20_multi_locus_full_experiment_H3_mle_output.csv",row.names = TRUE)
