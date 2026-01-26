@@ -15,8 +15,10 @@ write.csv(compiled_raw_marker_free_dataset,"../../Summaries and Outputs/D_compil
 
 # Transform individual raw egg counts to address undercounting the average and round these two counts to the nearest whole number
 #Needs to be adjusted for THIS dataset!
-#CH_transformed_marker_free_total_egg_count <-(CH_raw_marker_free_total_egg_count-2.383755)/0.9459906 # Slope and Intercept from Type II Regression on Schneider et al. 2025 dataset
-#LM_transformed_marker_free_total_egg_count <-(LM_raw_marker_free_total_egg_count-11.07247)/0.7537183 # Slope and Intercept from Type II Regression on Schneider et al. 2025 dataset
+#Lauren=> Y=0.83X-4.8
+#Connor=> Y=0.92X-6.4
+CH_transformed_marker_free_total_egg_count <-(CH_raw_marker_free_total_egg_count-6.479979)/0.9224861 # Slope and Intercept from Type II Regression on Schneider et al. 2025 dataset
+LM_transformed_marker_free_total_egg_count <-(LM_raw_marker_free_total_egg_count-4.866269)/0.8351445 # Slope and Intercept from Type II Regression on Schneider et al. 2025 dataset
 transformed_mean_marker_free_total_egg_count <-round((CH_transformed_marker_free_total_egg_count+LM_transformed_marker_free_total_egg_count)/2)
 derived_marker_free_dataset <-cbind(compiled_raw_marker_free_dataset,transformed_mean_marker_free_total_egg_count)
 write.csv(derived_marker_free_dataset,"../../Summaries and Outputs/E_derived_marker_free_dataset.csv",row.names = TRUE)
@@ -903,10 +905,23 @@ write.csv(yellow_plus_single_locus_dataset,"../../Summaries and Outputs/12_yello
 
 # Input for Counting Model ------------------------------------------------
 
-
+#individual vials-------------
 # Create input data file for fitting Cx(Co)M model to flies pooled by individual vials
 # Calculate the number of lethal zygotes by subtracting total adults from mean transformed egg count
 # Add marker-free viabilities as classes 130, 131, 132, rename columns to conform to standard format
+# Create vector of IDs to remove
+ids_to_remove <- c(
+  "MS_5_88_A",
+  paste0("MS_5_86_", LETTERS[1:7]),
+  paste0("MS_5_87_", LETTERS[1:7]),
+  paste0("MS_5_88_", LETTERS[1:7])
+)
+
+# Remove those rows
+multi_locus_individual_vials_dataset <-
+  multi_locus_individual_vials_dataset[
+    !multi_locus_individual_vials_dataset$ID %in% ids_to_remove, ]
+
 cleaned_derived_multiply_marked_dataset <- derived_multiply_marked_dataset
 count_lethal_zygotes <- cleaned_derived_multiply_marked_dataset$transformed_mean_multiply_marked_total_egg_count - cleaned_derived_multiply_marked_dataset$total_adult_count
 cleaned_derived_multiply_marked_dataset <- cbind(cleaned_derived_multiply_marked_dataset,count_lethal_zygotes)
@@ -916,8 +931,20 @@ female_viability_vector <- rep(0.921, 672)
 male_viability_vector <- rep(0.921, 672)
 multi_locus_individual_vials_dataset <- cbind(pruned_derived_multiply_marked_dataset,total_viability_vector,female_viability_vector,male_viability_vector)
 names(multi_locus_individual_vials_dataset) <- c("ID", paste0("class_", 1:132))
+ids_to_remove <- c(
+  paste0("MS_5_86_", LETTERS[1:7]),
+  paste0("MS_5_88_", LETTERS[1:7])
+)
+
+# Remove those rows
+multi_locus_individual_vials_dataset <-
+  multi_locus_individual_vials_dataset[
+    !multi_locus_individual_vials_dataset$ID %in% ids_to_remove, ]
 write.csv(multi_locus_individual_vials_dataset,"../../Summaries and Outputs/13_multi_locus_individual_vials_dataset.csv",row.names = TRUE)
+
+
 ######???
+#pooled by replicate cross------
 # Create input data file for fitting Cx(Co)M model to flies pooled by replicate cross using individual_vials_dataset
 cross_pooling_matrix <- multi_locus_individual_vials_dataset[,-c(1,131,132,133)]
 MS_14_1_rows <- c(1, 11, 21, 31, 41, 51, 61)
@@ -947,6 +974,7 @@ multi_locus_cross_pooled_dataset <- as.data.frame(cbind(unique_cross_id, multi_l
 names(multi_locus_cross_pooled_dataset) <- c("ID", paste0("class_", 1:132))
 write.csv(multi_locus_cross_pooled_dataset,"../../Summaries and Outputs/14_multi_locus_cross_pooled_dataset.csv",row.names = TRUE)
 
+#pooled by brooding------
 # Create input data file for fitting Cx(Co)M model to flies pooled by brooding period using individual_vials_dataset
 brood_pooling_matrix <- multi_locus_individual_vials_dataset[,-c(1,131,132,133)]
 MS_14_A_rows <- c(1:10)
@@ -970,6 +998,7 @@ multi_locus_brood_pooled_dataset <- as.data.frame(cbind(unique_brood_id, multi_l
 names(multi_locus_brood_pooled_dataset) <- c("ID", paste0("class_", 1:132))
 write.csv(multi_locus_brood_pooled_dataset,"../../Summaries and Outputs/15_multi_locus_brood_pooled_dataset.csv",row.names = TRUE)
 
+#individual_vials_dataset--------
 # Create input data file for fitting Cx(Co)M model to flies pooled for the full experiment using individual_vials_dataset
 full_experiment_matrix <- multi_locus_individual_vials_dataset[,-c(1,131,132,133)]
 MS_14_rows <- c(1:70)
@@ -985,4 +1014,8 @@ write.csv(multi_locus_full_experiment_dataset,"../../Summaries and Outputs/16_mu
 # Create a vector of observed values for fitting CxCoM model
 single_experimental_unit <- as.numeric(multi_locus_full_experiment_dataset)
 observed_count <- c(single_experimental_unit[130],single_experimental_unit[2:129])
+
+#save to import to supercomputer
+write.csv(single_experimental_unit,"../../Summaries and Outputs/single_experimental_unit.csv",row.names = TRUE)
+
 

@@ -1,0 +1,1 @@
+single_experimental_unit <- as.numeric(full_experiment_dataset[task_id,2:133]) []#pull out a single row, and this is the place to iterate

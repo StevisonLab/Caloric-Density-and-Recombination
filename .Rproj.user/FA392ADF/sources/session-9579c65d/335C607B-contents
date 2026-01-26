@@ -50,8 +50,7 @@ colnames(y_uniform) <- c("y1","y2","y3","y4","y5")
 # Define the probability of an egg being fertilized by an X or Y bearing sperm
 Pr_X_bearing_sperm <- 0.5
 Pr_Y_bearing_sperm <- 0.5
-
-#_______________________________________________________________________________
+#H0--------------------------
 # H0 states that there is no excess mortality in multiply marked crosses
 # relative to the marker free crosses. Therefore, the only parameters to
 # be estimated are precursor density and strength of the renewal process
@@ -1118,8 +1117,7 @@ CxCoM.Likelihood.H0 <- function(parameters) {
   log_likelihood <- sum(raw_log_likelihoods)
   return(-log_likelihood)
 }
-
-#______________________________________________________________________________
+#H1------
 # H1 states that there is some excess mortality in multiply marked crosses
 # relative to the marker free crosses. However, the excess mortality occurs
 # at random with respect to marker loci. Therefore, marker_free_viabilities
@@ -2188,7 +2186,7 @@ CxCoM.Likelihood.H1 <- function(parameters) {
   return(-log_likelihood)
 }
 
-#______________________________________________________________________________
+#H2----------------
 # H2 states that the excess mortality observed in multiply marked crosses
 # relative to marker free crosses is caused by sex-specific mutant effects.
 # Therefore, marker_free_viabilities come from marker free crosses, while
@@ -3257,7 +3255,7 @@ CxCoM.Likelihood.H2 <- function(parameters) {
   return(-log_likelihood)
 }
 
-#_______________________________________________________________________________
+#H3-------
 # H3 states that the excess mortality in multiply marked crosses relative
 # to marker free crosses is due sex-specific mutant and wildtype effects.
 # Therefore, marker_free_viabilities come from marker free crosses, while

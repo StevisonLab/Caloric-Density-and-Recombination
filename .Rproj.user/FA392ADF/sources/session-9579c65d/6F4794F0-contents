@@ -1,0 +1,248 @@
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
+library(ggplot2)
+
+
+# --------------------------------------------------
+# Set working directory
+# --------------------------------------------------
+setwd("C:/Users/Melika Shiran/Box/Plasticity and Nutrition NEW (Melika)/03. Raw Data and Analysis/5_Experiment_RR&ZLmarkerpresent/Data_Analysed(csv)")
+
+# --------------------------------------------------
+# Load data
+# --------------------------------------------------
+merged <- read_csv("merged_data_output.csv", col_types = cols()) %>%
+  mutate(
+    F1.developmental = as.character(`F1 developmental`),
+    F1.Genotype      = as.character(`F1 Genotype`)
+  )
+
+# --------------------------------------------------
+# Constants
+# --------------------------------------------------
+all_classes <- as.character(1:128)
+all_vials   <- 1:96
+all_broods  <- LETTERS[1:7]   # A–G
+
+# --------------------------------------------------
+# Base IDs
+# --------------------------------------------------
+merged_ids <- merged %>%
+  mutate(
+    experiment_id  = "MS_5",
+    cross_id       = VialID,
+    brood_id       = Brood,
+    vial_unique_id = paste("MS_5", VialID, Brood, sep = "_"),
+    treatment_id   = paste(`F1 developmental`, `F1 Genotype`, sep = "_"),
+    data_collector = Initials
+  )
+
+# --------------------------------------------------
+# Metadata collapsed to ONE row per vial
+# --------------------------------------------------
+vial_metadata <- merged_ids %>%
+  group_by(vial_unique_id) %>%
+  summarise(
+    experiment_id  = first(experiment_id),
+    cross_id       = first(cross_id),
+    brood_id       = first(brood_id),
+    treatment_id   = first(treatment_id),
+    data_collector = paste(sort(unique(data_collector)), collapse = ","),
+    .groups = "drop"
+  )
+
+# --------------------------------------------------
+# Ensure all Vial × Brood combinations exist
+# --------------------------------------------------
+all_combinations <- expand.grid(
+  VialID = all_vials,
+  Brood  = all_broods,
+  stringsAsFactors = FALSE
+) %>%
+  mutate(
+    vial_unique_id = paste("MS_5", VialID, Brood, sep = "_")
+  )
+
+# --------------------------------------------------
+# Phenotypic class counts (COMBINED per vial)
+# --------------------------------------------------
+phenotypes <- merged_ids %>%
+  group_by(vial_unique_id, Class) %>%
+  summarise(
+    class_count = sum(Count, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from   = Class,
+    values_from  = class_count,
+    values_fill  = 0,
+    names_prefix = "phenotypic_class_"
+  )
+
+# Ensure all 128 classes exist
+missing <- setdiff(
+  paste0("phenotypic_class_", all_classes),
+  names(phenotypes)
+)
+if (length(missing)) phenotypes[missing] <- 0
+
+# --------------------------------------------------
+# Adult sex counts (COMBINED per vial)
+# --------------------------------------------------
+sex_counts <- merged_ids %>%
+  group_by(vial_unique_id) %>%
+  summarise(
+    female_adult_count = sum(Count[Sex == "F"], na.rm = TRUE),
+    male_adult_count   = sum(Count[Sex == "M"], na.rm = TRUE),
+    total_adult_count  = sum(Count, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# --------------------------------------------------
+# Final table (ONE ROW PER VIAL)
+# --------------------------------------------------
+entries_final <- all_combinations %>%
+  left_join(vial_metadata, by = "vial_unique_id") %>%
+  left_join(phenotypes,    by = "vial_unique_id") %>%
+  left_join(sex_counts,    by = "vial_unique_id") %>%
+  mutate(
+    experiment_id = ifelse(is.na(experiment_id), "MS_5", experiment_id),
+    cross_id      = ifelse(is.na(cross_id), VialID, cross_id),
+    brood_id      = ifelse(is.na(brood_id), Brood, brood_id),
+    treatment_id  = ifelse(is.na(treatment_id), "missing_missing", treatment_id),
+    data_collector = ifelse(is.na(data_collector), "none", data_collector)
+  ) %>%
+  select(
+    experiment_id,
+    cross_id,
+    brood_id,
+    vial_unique_id,
+    treatment_id,
+    data_collector,
+    all_of(paste0("phenotypic_class_", all_classes)),
+    female_adult_count,
+    male_adult_count,
+    total_adult_count
+  )
+
+# --------------------------------------------------
+# Save
+# --------------------------------------------------
+write_csv( entries_final,"3_MS_raw_multiply_marked_adult_phenotypic_class_counts.csv")
+
+
+#sample size --------------------------------------------------
+entries_final_simple <- entries_final %>%
+  select(
+    cross_id,
+    brood_id,
+    treatment_id,
+    data_collector,
+    total_adult_count
+  )
+
+write_csv(entries_final_simple, "3_MS_samplesize.csv")
+#sample size based brood pooled ----------
+entries_final_vail <- entries_final %>%
+  group_by(cross_id)%>%
+  summarise( treatment_id       = first(treatment_id),
+             data_collector     = first(data_collector),
+             total_adult_count  = sum(total_adult_count, na.rm = TRUE),
+             .groups = "drop")%>%
+  select(
+    cross_id,
+    treatment_id,
+    data_collector,
+    total_adult_count
+  )
+
+write_csv(entries_final_vail,"3_MS_sampleize_brood_pooled.csv")
+#sample size based each person and treatment----------
+entries_final_cross <- entries_final %>%
+  group_by(brood_id,data_collector, treatment_id)%>%
+  summarise( cross_id = first(cross_id),
+    total_adult_count  = sum(total_adult_count, na.rm = TRUE),
+             .groups = "drop") %>%
+  select(
+    cross_id,
+    brood_id,
+    treatment_id,
+    data_collector,
+    total_adult_count
+  )
+
+write_csv(entries_final_cross,"3_MS_sampleize_cross&person_pooled.csv")
+#sample size based each person and treatment and brood
+entries_final_brood<- entries_final %>%
+group_by(data_collector, treatment_id)%>%
+  summarise( cross_id = first(cross_id),
+             total_adult_count  = sum(total_adult_count, na.rm = TRUE),
+             .groups = "drop") %>%
+  select(
+    cross_id,
+    treatment_id,
+    data_collector,
+    total_adult_count
+  )
+
+write_csv(entries_final_brood,"3_MS_sampleize_cross&person&Brood_pooled.csv")
+
+#plot for the sample sizes:
+p1 <- ggplot(entries_final_simple,
+             aes(x = treatment_id,
+                 y = total_adult_count,
+                 fill = data_collector)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Sample size (no pooling)",
+    x = "Treatment",
+    y = "Total adult count"
+  ) +
+  theme_bw()
+
+p1
+
+p2 <- ggplot(entries_final_vail,
+             aes(x = treatment_id,
+                 y = total_adult_count,
+                 fill = data_collector)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Sample size (brood pooled)",
+    x = "Treatment",
+    y = "Total adult count"
+  ) +
+  theme_bw()
+
+p2
+
+p3 <- ggplot(entries_final_cross,
+             aes(x = treatment_id,
+                 y = total_adult_count,
+                 fill = data_collector)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Sample size (cross × person pooled)",
+    x = "Treatment",
+    y = "Total adult count"
+  ) +
+  theme_bw()
+
+p3
+
+p4 <- ggplot(entries_final_brood,
+             aes(x = treatment_id,
+                 y = total_adult_count,
+                 fill = data_collector)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Sample size (person × treatment pooled)",
+    x = "Treatment",
+    y = "Total adult count"
+  ) +
+  theme_bw()
+
+p4
+

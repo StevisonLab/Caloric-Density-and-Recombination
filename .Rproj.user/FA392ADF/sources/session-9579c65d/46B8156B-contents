@@ -1,0 +1,437 @@
+#set the working Directory
+setwd("C:/Users/Melika Shiran/Box/Plasticity and Nutrition NEW (Melika)/03. Raw Data and Analysis/5_Experiment_RR&ZLmarkerpresent/Data_Analysed(csv)")
+
+# Read and combine all files
+library(dplyr)
+library(readr)
+library(stringr)
+library(ggplot2)
+library(tidyr)
+library(lme4)
+library(lmerTest) # For p-values in mixed models
+library(emmeans)  # For post-hoc tests
+library(multcompView)  # For cld()
+library(broom)
+library(multcomp)
+
+
+
+# Combining all the phenotypes
+phenotype_files <- list.files(path = "Phenotypes", pattern = "\\.csv$", full.names = TRUE)
+
+all_phenotypes <- phenotype_files %>%
+  lapply(function(file) {
+    df <- read_csv(file, col_types = cols(.default = "c"))
+    df$Source <- basename(file)
+    return(df)
+  }) %>%
+  bind_rows()
+
+# Check the combined data
+head(all_phenotypes)
+colnames(all_phenotypes)
+
+# Clean phenotype data
+all_phenotypes <- all_phenotypes %>%
+  rename(VialID = `Vial ID`)
+#Deleting the rows that have Na in initials (deleting extras)
+all_phenotypes <- all_phenotypes %>%
+  filter(!is.na(Initials) & Initials != "")
+
+#deleting rows that have na or 0 in theirs counts all_phenotypes 
+all_phenotypes <- all_phenotypes %>%
+  filter(
+    !is.na(Count),                # Remove NAs
+    !str_detect(Count, "o")       # Remove rows with "o" in Count
+  )
+
+#making sure their numerics and characters
+all_phenotypes <- all_phenotypes %>%
+  mutate(
+    Count = as.numeric(Count),
+    VialID = as.character(VialID)
+  )
+
+# Read your treatment key
+treatment_key <- read_csv("Treatmentskeys.csv")
+treatment_key <- treatment_key %>%
+  rename(VialID = `Vial ID`)
+
+#make sure that it is chracter
+treatment_key <- treatment_key %>%
+  mutate(VialID = as.character(VialID), `F1 Genotype`= as.character(`F1 Genotype`) )
+
+#reading egg count
+egg_count <- read_csv("ALL_Egg.csv")
+colnames(egg_count)
+
+egg_count <- egg_count %>%
+  mutate(
+    Eggsumcount = as.numeric(Eggsumcount),
+    VialID = as.character(VialID)
+  )
+# Merge egg count + data 
+merged_data <- all_phenotypes %>%
+  left_join(egg_count, by = c("VialID", "Brood"))
+ 
+#treatment key + merged_data
+merged_data <- merged_data %>%
+  left_join(treatment_key, by = "VialID")
+
+#sum the total of same class (same Genotype and sex)of each vialId and brood in one 
+#(REMOVING DATES,NOTES, source)
+
+merged_data <- merged_data %>%
+  select(-Date,-Source, -Notes.x, -Notes.y) %>%  # Remove the date column
+  group_by(across(-Count)) %>%  # Group by all columns except Count
+  summarise(Count = sum(Count, na.rm = TRUE), .groups = "drop")
+
+# creating the egg per female column
+merged_data$Eggperfemale <- merged_data$Eggsumcount / merged_data$Female_in_vial
+
+#deleting the 0 Brood
+merged_data <- merged_data[merged_data$Brood != 0, ]
+
+
+# Save merged_data as CSV
+write_csv(merged_data, "merged_data_output.csv")
+#write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_data_output.csv")
+
+
+#_____________________________________________________________________________
+#                                             General
+#______________________________________________________________________________
+######total scored flies
+total_scored <- sum(merged_data$Count, na.rm = TRUE)
+print(total_scored)
+
+write.csv(total_scored, "../Summary Tables/Totalfliesscored.csv")
+
+#### how many each person scored?
+# Group by Initials and sum Count
+initials_count <- merged_data %>%
+  group_by(Initials) %>%
+  summarise(Total_Count = sum(Count, na.rm = TRUE), .groups = "drop")
+
+# Print the result
+print(initials_count)
+write.csv(initials_count, "../Summary Tables/initials_count.csv")
+
+#### AMOUNT OF ADULTS PER EGG PER FEMLAE
+Adults_per_egg_per_female <- merged_data %>%
+  group_by(Initials, `crossover Classification`) %>%
+  summarise(
+    total_adults = sum(Count, na.rm = TRUE),
+    Eggperfemale = first(Eggperfemale),
+    .groups = "drop"
+  ) %>%
+  mutate(adults_per_egg_per_female = total_adults / Eggperfemale)
+
+print(Adults_per_egg_per_female)
+#write.csv(Adults_per_egg_per_female,"../Summary Tables/Adults_per_egg_per_female.csv",row.names = FALSE)
+
+ggplot(Adults_per_egg_per_female, aes(
+  x = `crossover Classification`,
+  y = adults_per_egg_per_female,
+  fill = Initials)) + geom_col(position = position_dodge()) +labs(
+    title = "Adults per Egg per Female",
+    x = "Crossover Classification",
+    y = "Adults per Egg per Female"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
+####how many crossover each individual has counted??
+total_crossovers_per_initial <- merged_data %>%
+  mutate(Count = as.numeric(Count)) %>%
+  mutate(Crossover_Events_Per_Fly = case_when(
+    `crossover Classification` == "Non-Crossover" ~ 0,
+    `crossover Classification` == "Single Crossover" ~ 1,
+    `crossover Classification` == "Double Crossover" ~ 2,
+    `crossover Classification` == "Triple Crossover" ~ 3,
+    `crossover Classification` == "Quadruple Crossover"~ 4,
+    TRUE ~ NA
+  )) %>%
+  mutate(Total_Crossover_Events_Per_Row = Crossover_Events_Per_Fly * Count) %>%
+  group_by(Initials) %>%
+  summarise(Total_Crossover_Events = sum(Total_Crossover_Events_Per_Row, na.rm = TRUE), .groups = "drop")
+
+print(total_crossovers_per_initial)
+
+####how may crossover each individual counted per group 
+
+crossover_counts_per_initial <- merged_data %>%
+  group_by(Initials, `crossover Classification`) %>%
+  summarise(Total_Count = sum(Count, na.rm = TRUE), .groups = "drop")
+
+print(crossover_counts_per_initial)
+write.csv(crossover_counts_per_initial, "../Summary Tables/crossover_counts_per_initial.csv")
+
+
+#________________________________________
+# adult per strain per treatment
+#______________________________________
+
+adults_summary <- merged_data %>%
+  group_by(`F1 developmental`, `F1 Genotype`) %>%
+  summarise(total_adults = sum(Count, na.rm = TRUE)) %>%
+  ungroup()
+
+
+ggplot(adults_summary, aes(x = `F1 developmental`, y = total_adults, fill = as.factor(`F1 Genotype`))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  labs(title = "Adult Count per Diet and Genotype",
+       x = "Diets",
+       y = "Mean Adult Count",
+       fill = "Genotype") +
+  theme_minimal()
+
+                
+#_______________________________________________________________________________________
+#                                               Fecundity
+#_______________________________________________________________________________________
+
+###how many egg per female in each treatment
+
+fecundity_data <- merged_data %>%
+  group_by(VialID, Brood) %>%
+  mutate(fecundity = Eggsumcount / Female_in_vial) %>%
+  slice(1) %>%
+  dplyr::select(VialID, Brood,`F1 Genotype`, `F1 developmental`, fecundity) %>%
+  ungroup()
+
+# 3. ANOVA
+anova_model_Fecundity <- aov(fecundity ~ `F1 Genotype` * `F1 developmental` * Brood ,data = fecundity_data)
+summary(anova_model_Fecundity)
+anova_summary <- tidy(anova_model_Fecundity) %>%
+  mutate(
+    significance = case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01  ~ "**",
+      p.value < 0.05  ~ "*",
+      p.value < 0.1   ~ ".",
+      TRUE ~ ""
+    )
+  )
+write.csv(anova_summary, "../Statistical Analysis/anova_model_Fecundity.csv", row.names = FALSE)
+
+# Estimated marginal means for the interaction
+emm_Fecundity <- emmeans(anova_model_Fecundity, ~ `F1 Genotype` * `F1 developmental`)
+
+# Compact letter display (CLD)
+cld_Fecundity <- cld(emm_Fecundity, Letters = letters, adjust = "tukey")
+
+# Clean up for plotting
+plot_data <- cld_Fecundity %>%
+  mutate(
+    Genotype = factor(`F1 Genotype`),
+    Development = factor(`F1 developmental`, levels = c("0.5x", "1.0x", "2.0x")),
+    .group = trimws(.group) # remove extra spaces from CLD letters
+  )
+
+# --- Interaction plot with emmeans ---
+ggplot(plot_data, aes(x = Development, y = emmean, color = Genotype, group = Genotype)) +
+  geom_point(position = position_dodge(0.4), size = 3) +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
+                width = 0.2, position = position_dodge(0.4)) +
+  geom_text(aes(label = .group),
+            vjust = -0.8,
+            position = position_dodge(0.4),
+            size = 5) +
+  labs(x = "F1 developmental diet",
+       y = "Fecundity (Mean ± SE)",
+       color = "Genotype") +
+  theme_classic(base_size = 14)
+
+# --- Box plot by developmental diet ---
+ggplot(fecundity_data, aes(x = `F1 developmental`, y = fecundity, fill = `F1 Genotype`)) +
+  geom_boxplot() +
+  facet_wrap(~ `F1 Genotype`, scales = "fixed") +  # one plot per genotype
+  labs(
+    title = "Fecundity by G X E",
+    x = "Treatment",
+    y = "Fecundity"
+  ) +
+  scale_fill_manual(values = c(
+    "399" = "#9e9ac8",
+    "42"  = "#fb8072"
+  )) +
+  theme_minimal(base_size = 25) +  # base size for axis titles and text
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 35, face = "bold", hjust = 0.5),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 22),
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold")
+  )
+
+
+# --- Box plot by genotype ---
+ggplot(fecundity_data, aes(x = `F1 Genotype`, y = fecundity, fill = `F1 developmental`)) +
+  geom_boxplot() +
+  labs(title = "Fecundity by Genotype and Developmental Diet",
+       x = "Genotype",
+       y = "Fecundity (Eggs per Female)") +
+  theme_minimal()+  theme(legend.position = "none")
+
+
+#________________________________________________________________________________
+#                      check for survival>1    create the total adult count
+#_______________________________________________________________________________
+
+merged_data<- merged_data %>%
+  group_by(VialID, Brood) %>%
+  mutate(total_adult = sum(Count, na.rm = TRUE)) %>%
+  ungroup()
+
+###Filter rows where egg-sumcount is less than total_adult 
+
+merged_problematic <- merged_data %>%
+  filter(Eggsumcount < total_adult) %>%
+  dplyr::select(VialID, Brood, Eggsumcount, total_adult) %>%
+  distinct()
+
+#write_csv(merged_data, "../Raw Data/Pilots/Recombination Rate/merged_problematic.csv")
+
+
+#_____________________________________________________________________________________
+#                                          Survival marker present
+#______________________________________________________________________________________
+
+#Calculate survival alive +dead
+
+
+survival_summary <- merged_data %>%
+  group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
+  summarise(
+    # Sum Count where Sex is not NA (alive)
+    FemaleMale = sum(Count[!is.na(Sex)], na.rm = TRUE),
+    # Sum Count where Sex is NA (dead)
+    dead = sum(Count[is.na(Sex)], na.rm = TRUE),
+    # Egg count per vial
+    Egg_Count = first(as.numeric(Eggsumcount)),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    Total_Count = FemaleMale + dead,
+    Survival = Total_Count / Egg_Count,
+    Survival = if_else(Survival > 1, 1, Survival)  # Cap Survival at 1
+  )
+
+# ANOVA
+anova_model<- aov(Survival ~ Brood * `F1 developmental`*  `F1 Genotype`, data = survival_summary)
+summary(anova_model)
+
+# Tidy the ANOVA model and save to CSV
+anova_summary <- tidy(anova_model) %>%
+  mutate(
+    significance = case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01  ~ "**",
+      p.value < 0.05  ~ "*",
+      p.value < 0.1   ~ ".",
+      TRUE ~ ""
+    ))
+write.csv(anova_summary, "../Statistical Analysis/anova_model_Survival.csv", row.names = FALSE)
+
+# Plot by treatment!
+
+ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 Genotype`)) +
+  geom_boxplot() +
+  facet_wrap(~ `F1 Genotype`, scales = "fixed") +  # one plot per genotype
+  ylim(0, 1) +
+  theme_minimal() +
+  labs(
+    title = "Survival Rate GxE",
+    x = "Treatment",
+    y = "Survival Rate"
+  )+  theme_minimal(base_size = 25) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 35, face = "bold", hjust = 0.5),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 14),
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold")
+  )+
+  scale_fill_manual(values = c(
+    "399"="#9e9ac8",
+    "42"= "#fb8072"
+  ))
+
+###plot genotype and treatment
+ggplot(survival_summary, aes(x = `F1 developmental`, y = Survival, fill = `F1 developmental`)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +  # cleaner boxplot
+#  geom_jitter(width = 0.2, alpha = 0.5, color = "black") +  # adds points
+  facet_wrap(~ `F1 Genotype`, scales = "free_y") +  # one plot per genotype
+  ylim(0, 1) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Survival Rate by Treatment and Genotype",
+    x = "Treatment",
+    y = "Survival Rate"
+  ) +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold")
+  )
+
+#________________________________________________________________
+#                        survival by sex (with dead split equally)
+#________________________________________________________________
+
+survival_data_sex <- merged_data %>%
+  group_by(Brood, VialID, `F1 developmental`, `F1 Genotype`) %>%
+  summarise(
+    live_F = sum(Count[Sex == "F"], na.rm = TRUE),
+    live_M = sum(Count[Sex == "M"], na.rm = TRUE),
+    dead = sum(Count[is.na(Sex)], na.rm = TRUE),
+    Egg_Count = first(as.numeric(Eggsumcount)),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    dead_per_sex = dead / 2,
+    adjusted_F = live_F + dead_per_sex,
+    adjusted_M = live_M + dead_per_sex,
+    expected_per_sex = Egg_Count / 2,
+    female_survival = pmin(adjusted_F / expected_per_sex, 1),
+    male_survival = pmin(adjusted_M / expected_per_sex, 1)
+  ) %>%
+  # Convert to long format for plotting
+  pivot_longer(
+    cols = c(female_survival, male_survival),
+    names_to = "Sex", 
+    values_to = "Survival"
+  ) %>%
+  mutate(Sex = ifelse(Sex == "female_survival", "Female", "Male"))
+
+# Define common plot theme and colors
+my_theme <- theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold")
+  )
+
+sex_colors <- c("Female" = "#F0899C", "Male" = "lightblue")
+
+#________________________________________________________________
+# Plot 1: All genotypes and treatments (sex comparison)
+#________________________________________________________________
+ggplot(survival_data_sex, aes(x = `F1 developmental`, y = Survival, fill = Sex)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) +
+  facet_wrap(~ `F1 Genotype`) +
+  my_theme +
+  labs(
+    title = "Survival by Treatment, Genotype, and Sex",
+    x = "Treatment",
+    y = "Survival Rate"
+  ) +
+  scale_fill_manual(values = sex_colors) +
+  ylim(0, 1)
+
+
