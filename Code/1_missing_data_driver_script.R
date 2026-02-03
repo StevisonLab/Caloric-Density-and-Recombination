@@ -1,6 +1,7 @@
 #setwd("Raw Data/") # Please use Raw Data as working directory
-
 setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/3")
+# Compute the egg correction
+source(file = "../../Code/0_observer_correction_egg_counts.R")
 
 # Compile, format, transform all raw data into appropriate input files
 source(file = "../../Code/2_missing_data_dataset_compilation_script.R")

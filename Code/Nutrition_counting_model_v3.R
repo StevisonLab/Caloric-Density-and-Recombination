@@ -1233,7 +1233,7 @@ for (v in 1:max_p_value) {
                                   upper = c(9,9,9,9,9,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
   
   # Create output vector of y, p, likelihood, convergence code
-  MLE_H3_outputs <- c(single_experimental_unit[1],
+  MLE_H3_outputs <- c(task_id,
                       (((MLE_H3_Full_CxCoM_Table$par[1]+MLE_H3_Full_CxCoM_Table$par[2]+MLE_H3_Full_CxCoM_Table$par[3]+MLE_H3_Full_CxCoM_Table$par[4]+MLE_H3_Full_CxCoM_Table$par[5])/(2*p[1]))*100),
                       MLE_H3_Full_CxCoM_Table$par[1]/(2*p[1]),
                       MLE_H3_Full_CxCoM_Table$par[2]/(2*p[1]),
@@ -1279,9 +1279,8 @@ for (v in 1:max_p_value) {
 
 # Take output matrix MLE_Uniform_CxCoM and sort by likelihood
 # Print the sorted table for records, make sure to RENAME FILEsbatch 
-MLE_H3_full<-as.data.frame(MLE_H3_full_outputs)
-df3 <- MLE_H3_full[order(MLE_H3_full$lnL),]
-
+MLE_H3_full <- as.data.frame(MLE_H3_full_outputs, stringsAsFactors = FALSE)
+df3 <- MLE_H3_full[order(MLE_H3_full$lnL), ]
 #write.csv(df3,"../Summaries and Outputs/20_multi_locus_full_experiment_H3_mle_output.csv",row.names = TRUE)
 #$#
 MLE_Uniform_CxCoM <- df3[1,]       # keep only the best row
