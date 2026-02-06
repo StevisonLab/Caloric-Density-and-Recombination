@@ -20,10 +20,8 @@ compiled_raw_marker_free_dataset$genotype <- sapply(treatment_genotype, function
 write.csv(compiled_raw_marker_free_dataset, "../../Summaries and Outputs/D_compiled_raw_marker_free_dataset.csv", row.names = TRUE)
 
 # Transform individual raw egg counts to address undercounting the average and round these two counts to the nearest whole number
-#Lauren=> Y=0.83X-4.8
-#Connor=> Y=0.92X-6.4
 CH_transformed_marker_free_total_egg_count <- (CH_raw_marker_free_total_egg_count - 6.479979) / 0.9224861
-LM_transformed_marker_free_total_egg_count <- (LM_raw_marker_free_total_egg_count - 4.866269) / 0.8351445
+LM_transformed_marker_free_total_egg_count <- (LM_raw_marker_free_total_egg_count - 4.866269) / 0.8351445      
 transformed_mean_marker_free_total_egg_count <- round((CH_transformed_marker_free_total_egg_count + LM_transformed_marker_free_total_egg_count) / 2)
 derived_marker_free_dataset <- cbind(compiled_raw_marker_free_dataset, transformed_mean_marker_free_total_egg_count)
 write.csv(derived_marker_free_dataset, "../../Summaries and Outputs/E_derived_marker_free_dataset.csv", row.names = TRUE)
@@ -70,13 +68,15 @@ summary(marked_free_viability_anova)
 #Marker present------
 # Read in csv files of raw count data from the multiply marked cross
 CH_multiply_marked_egg_count <- read.csv("1_CH_raw_multiply_marked_egg_counts.csv", header=TRUE)
-LM_multiply_marked_egg_count <- read.csv("2_LM_raw_multiply_marked_egg_counts.csv", header=TRUE)
-MS_multiply_marked_adult_phenotypic_class_counts <- read.csv("3_MS_raw_multiply_marked_adult_phenotypic_class_counts.csv", header=TRUE)
+#LM_multiply_marked_egg_count <- read.csv("2_LM_raw_multiply_marked_egg_counts.csv", header=TRUE)
+LH_multiply_marked_egg_count <- read.csv("2_LH_raw_multiply_marked_egg_counts.csv", header=TRUE)
+MS_multiply_marked_adult_phenotypic_class_counts <- read.csv("3_MS_raw_multiply_marked_adult_phenotypic_class_2experiment.csv", header=TRUE)
 
 # Compile the raw data from different observers and life history stages
 CH_raw_multiply_marked_total_egg_count <- CH_multiply_marked_egg_count$total_egg_count
-LM_raw_multiply_marked_total_egg_count <- LM_multiply_marked_egg_count$total_egg_count
-compiled_raw_multiply_marked_dataset <- cbind(MS_multiply_marked_adult_phenotypic_class_counts, CH_raw_multiply_marked_total_egg_count, LM_raw_multiply_marked_total_egg_count)
+#LM_raw_multiply_marked_total_egg_count <- LM_multiply_marked_egg_count$total_egg_count
+LH_raw_multiply_marked_total_egg_count <- LH_multiply_marked_egg_count$total_egg_count
+#compiled_raw_multiply_marked_dataset <- cbind(MS_multiply_marked_adult_phenotypic_class_counts, CH_raw_multiply_marked_total_egg_count, LH_raw_multiply_marked_total_egg_count)
 
 # Split treatment_id into treatment and genotype for multiply-marked dataset
 treatment_genotype_mm <- strsplit(as.character(compiled_raw_multiply_marked_dataset$treatment_id), "_")
@@ -86,10 +86,12 @@ compiled_raw_multiply_marked_dataset$genotype <- sapply(treatment_genotype_mm, f
 write.csv(compiled_raw_multiply_marked_dataset, "../../Summaries and Outputs/4_compiled_raw_multiply_marked_dataset.csv", row.names = TRUE)
 
 # Transform individual raw egg counts to address undercounting
-CH_transformed_multiply_marked_total_egg_count <- (CH_raw_multiply_marked_total_egg_count - 6.479979) / 0.9224861
-LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 4.866269) / 0.8351445
-transformed_mean_multiply_marked_total_egg_count <- round((CH_transformed_multiply_marked_total_egg_count + LM_transformed_multiply_marked_total_egg_count) / 2)
-derived_multiply_marked_dataset <- cbind(compiled_raw_multiply_marked_dataset, transformed_mean_multiply_marked_total_egg_count)
+CH_transformed_multiply_marked_total_egg_count <- (CH_raw_multiply_marked_total_egg_count - 6.479979) / 0.9224861    
+#LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 4.866269) / 0.8351445   
+LH_transformed_multiply_marked_total_egg_count <- (LH_raw_multiply_marked_total_egg_count - 2.5569307 ) / 0.8528595 
+transformed_mean_multiply_marked_total_egg_count <- round((CH_transformed_multiply_marked_total_egg_count + LH_transformed_multiply_marked_total_egg_count) / 2)
+#derived_multiply_marked_dataset <- cbind(compiled_raw_multiply_marked_dataset, transformed_mean_multiply_marked_total_egg_count)
+
 write.csv(derived_multiply_marked_dataset, "../../Summaries and Outputs/5_derived_multiply_marked_dataset.csv", row.names = TRUE)
 
 # Calculate the per vial viability of females, males, and total under the 1:1 primary sex ratio assumption
@@ -195,13 +197,13 @@ write.csv(multi_locus_individual_vials_dataset,"../../Summaries and Outputs/13_m
 #pooled by replicate cross------
 # Create input data file for fitting Cx(Co)M model to flies pooled by replicate cross using individual_vials_dataset
 pooled_dataset <- derived_multiply_marked_dataset %>%
-  arrange(data_collector, Treatment, Genotype, vial_unique_id) %>%
-  group_by(data_collector, Treatment, Genotype) %>%
+  arrange(data_collector, treatment_id,) %>%
+  group_by(data_collector, treatment_id,brood_id) %>%
   summarise(
     # keep identifiers from first vial
     experiment_id  = first(experiment_id),
     cross_id       = first(cross_id),
-    brood_id       = first(brood_id),
+   # brood_id       = first(brood_id),
     vial_unique_id = first(vial_unique_id),
     
     # sum phenotypes
@@ -215,8 +217,8 @@ pooled_dataset <- derived_multiply_marked_dataset %>%
     # sum eggs and lethals
     CH_raw_multiply_marked_total_egg_count =
       sum(CH_raw_multiply_marked_total_egg_count, na.rm = TRUE),
-    LM_raw_multiply_marked_total_egg_count =
-      sum(LM_raw_multiply_marked_total_egg_count, na.rm = TRUE),
+    LH_raw_multiply_marked_total_egg_count =
+      sum(LH_raw_multiply_marked_total_egg_count, na.rm = TRUE),
     transformed_mean_multiply_marked_total_egg_count =
       sum(transformed_mean_multiply_marked_total_egg_count, na.rm = TRUE),
     count_lethal_zygotes =
@@ -228,9 +230,9 @@ pooled_dataset <- derived_multiply_marked_dataset %>%
     .groups = "drop"
   )
 
-# 5) Prune columns for multilocus format
+# 5) Prune columns for multilocus format #keep the vial_unique_id &count_lethal_zygotes& Mean_Viability
 
-pruned_pooled_dataset <- pooled_dataset[ , -c(1, 2, 3, 4,5, 6, 136:141)]
+pruned_pooled_dataset <- pooled_dataset[ , -c(1:5, 135:140)]
 
 # 6) Rename + duplicate viability for sex-specific slots
 

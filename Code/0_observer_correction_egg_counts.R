@@ -14,6 +14,9 @@ lauren
 
 Connor <- lmodel2(PAC_ch ~ microscope_count, data=pac_comparison)
 Connor
+
+laney<-lmodel2(PAC_lh ~ microscope_count, data=pac_comparison)
+laney
 #Always use the 2 MA regression results:
 #lauren's y=mx+b is 
 #y= Number of point and clicks

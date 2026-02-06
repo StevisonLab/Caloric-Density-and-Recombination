@@ -13,6 +13,8 @@ library(tidyr)
 # 1. Read and prepare main data
 df <- read.csv("Nutrition_countingmodel_outputs_all.csv")
 
+df<- read.csv("Nutrition_countingmodel_outputs_crosspooled.csv")
+
 df <- df %>% extract(original_ID,
     into = c("experiment", "vialID", "Brood"),
     regex = "^(.*)_([0-9]+)_([A-Za-z])$"
@@ -37,6 +39,7 @@ df <- df %>%
 df$Brood <- as.factor(df$Brood)
 df$Diet <- as.factor(df$Diet)
 df$GB <- as.factor(df$GB)
+df$People <- as.factor(df$People)
 df$recombination_fractions <- as.numeric(df$recombination_fractions)
 
 ###delete the outlier (just checking)
@@ -51,16 +54,20 @@ df$recombination_fractions <- as.numeric(df$recombination_fractions)
   ) %>%
   ungroup()
 
-###delete the outliers
-#Biologicaly
+###delete the outlines
+#Biological
 boxplot(recombination_fractions ~ Diet * GB, data = df)
 
 df <- df %>%filter(recombination_fractions < 1000)  # example threshold
-  
-  
-  
+df <- df %>%filter(People %in% c("M","L","S")) # example threshold
+
+df <- df %>%filter(!(Diet == "0.5X" & People == "C"))
+
+
 # 3. ANOVA
-anova_result <- aov(recombination_fractions ~  Brood *Diet * GB + Error(People), data = df)
+anova_result <- aov(recombination_fractions ~  Brood * Diet * GB * People, data = df)
+anova_result <- aov(recombination_fractions ~ People, data = df)
+
 anova_result <- aov(recombination_fractions ~ Brood * Diet * GB, data = df)
 summary(anova_result)
 
@@ -80,17 +87,18 @@ anova_summary <- tidy(anova_result) %>%
 TukeyHSD(anova_result)
 
 # 5. Estimated marginal means and CLD
-emm <- emmeans(anova_result, ~ Diet* GB)
+emm <- emmeans(anova_result, ~ People* GB)
 cld <- cld(emm, Letters = letters)
 
 plot_data <- cld %>%
   mutate(
     GB = factor(GB),
-    Diet = factor(Diet, levels = c("0.5x", "1.0x", "2.0x")),
+    People= factor(People),
+    #Diet = factor(Diet, levels = c("0.5x", "1.0x", "2.0x")),
     .group = trimws(.group) # remove extra spaces
   )
 # Plot
-ggplot(plot_data, aes(x = Diet, y = emmean, color = GB, group = GB)) +
+ggplot(plot_data, aes(x = People, y = emmean, color = GB, group = GB)) +
   geom_point(position = position_dodge(0.4), size = 3) +
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
                 width = 0.2, position = position_dodge(0.4)) +
