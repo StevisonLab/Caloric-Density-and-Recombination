@@ -5,12 +5,15 @@ library(dbplyr)
 # Read in csv files of raw count data from the marker free cross
 CH_marker_free_egg_count <- read.csv("A_CH_raw_marker_free_egg_counts.csv", header=TRUE)
 LM_marker_free_egg_count <- read.csv("B_LM_raw_marker_free_egg_counts.csv", header=TRUE)
+LH_marker_free_egg_count <- read.csv("B_LH_raw_marker_free_egg_counts.csv", header=TRUE)
 MS_marker_free_adult_count <- read.csv("C_MS_raw_marker_free_adult_counts.csv", header=TRUE)
 
 # Compile the raw data from different observers and life history stages
 CH_raw_marker_free_total_egg_count <- CH_marker_free_egg_count$total_egg_count
 LM_raw_marker_free_total_egg_count <- LM_marker_free_egg_count$total_egg_count
+LH_raw_marker_free_total_egg_count <- LH_marker_free_egg_count$total_egg_count
 compiled_raw_marker_free_dataset <- cbind(MS_marker_free_adult_count, CH_raw_marker_free_total_egg_count, LM_raw_marker_free_total_egg_count)
+compiled_raw_marker_free_dataset <- cbind(MS_marker_free_adult_count, CH_raw_marker_free_total_egg_count, LH_raw_marker_free_total_egg_count)
 
 # Split treatment_id into treatment and genotype for marker-free dataset
 treatment_genotype <- strsplit(as.character(compiled_raw_marker_free_dataset$treatment_id), "_")
@@ -22,7 +25,10 @@ write.csv(compiled_raw_marker_free_dataset, "../../Summaries and Outputs/D_compi
 # Transform individual raw egg counts to address undercounting the average and round these two counts to the nearest whole number
 CH_transformed_marker_free_total_egg_count <- (CH_raw_marker_free_total_egg_count - 6.479979) / 0.9224861
 LM_transformed_marker_free_total_egg_count <- (LM_raw_marker_free_total_egg_count - 4.866269) / 0.8351445      
+LH_transformed_marker_free_total_egg_count <- (LH_raw_marker_free_total_egg_count - 2.5569307 ) / 0.8528595 
 transformed_mean_marker_free_total_egg_count <- round((CH_transformed_marker_free_total_egg_count + LM_transformed_marker_free_total_egg_count) / 2)
+transformed_mean_marker_free_total_egg_count <- round((CH_transformed_marker_free_total_egg_count + LH_transformed_marker_free_total_egg_count) / 2)
+
 derived_marker_free_dataset <- cbind(compiled_raw_marker_free_dataset, transformed_mean_marker_free_total_egg_count)
 write.csv(derived_marker_free_dataset, "../../Summaries and Outputs/E_derived_marker_free_dataset.csv", row.names = TRUE)
 
@@ -37,6 +43,7 @@ marker_free_viability_long <- data.frame(
   Cross = rep(marker_free_viability_dataset$cross_id, times = 2),
   Brood = rep(marker_free_viability_dataset$brood_id, times = 2),
   Treatment = rep(marker_free_viability_dataset$treatment, times = 2),
+  Data_collector = rep(marker_free_viability_dataset$data_collector, times = 2),
   Genotype = rep(marker_free_viability_dataset$genotype, times = 2),
   Sex = factor(
     rep(c("Female", "Male"), each = nrow(marker_free_viability_dataset))
@@ -51,32 +58,47 @@ marker_free_viability_long$Brood <- factor(marker_free_viability_long$Brood)
 marker_free_viability_long$Treatment <- factor(marker_free_viability_long$Treatment)
 marker_free_viability_long$Genotype <- factor(marker_free_viability_long$Genotype)
 marker_free_viability_long$Sex <- factor(marker_free_viability_long$Sex)
+marker_free_viability_long$Data_collector <- factor(marker_free_viability_long$Data_collector)
 write.csv(marker_free_viability_long,"../../Summaries and Outputs/G_marker_free_viability_long.csv",row.names = FALSE)
+#anova
+marked_free_viability_anova <- aov(Viability ~ Treatment  * Sex * Genotype *Brood * Data_collector,data = marker_free_viability_long)
+summary(marked_free_viability_anova)
+#eemeans (donot use te contrast )
+
 
 #Compute Treatment × Genotype × means => because sex was not significant we are not using #Sex
+#3
 viability_means_tgs <- marker_free_viability_long %>%
-  group_by(Treatment, Genotype) %>%
+  group_by(Treatment, Genotype,Brood) %>%
+  summarise(
+    Mean_Viability = mean(Viability, na.rm = TRUE),
+    .groups = "drop"
+  )
+#2,1
+#viability_means_tgs <- marker_free_viability_long %>%
+group_by(Treatment) %>%
   summarise(
     Mean_Viability = mean(Viability, na.rm = TRUE),
     .groups = "drop"
   )
 write.csv(viability_means_tgs,"../../Summaries and Outputs/H_marker_free_viability_sumarry.csv",row.names = FALSE)
 
-marked_free_viability_anova <- aov(Viability ~ Treatment * Genotype * Sex* Brood ,data = marker_free_viability_long)
-
-summary(marked_free_viability_anova)
 #Marker present------
 # Read in csv files of raw count data from the multiply marked cross
 CH_multiply_marked_egg_count <- read.csv("1_CH_raw_multiply_marked_egg_counts.csv", header=TRUE)
-#LM_multiply_marked_egg_count <- read.csv("2_LM_raw_multiply_marked_egg_counts.csv", header=TRUE)
+LM_multiply_marked_egg_count <- read.csv("2_LM_raw_multiply_marked_egg_counts.csv", header=TRUE)
 LH_multiply_marked_egg_count <- read.csv("2_LH_raw_multiply_marked_egg_counts.csv", header=TRUE)
+MS_multiply_marked_adult_phenotypic_class_counts <- read.csv("3_MS_raw_multiply_marked_adult_phenotypic_class_counts.csv", header=TRUE)
 MS_multiply_marked_adult_phenotypic_class_counts <- read.csv("3_MS_raw_multiply_marked_adult_phenotypic_class_2experiment.csv", header=TRUE)
+MS_multiply_marked_adult_phenotypic_class_counts <- read.csv("3_MS_raw_multiply_marked_adult_phenotypic_class_counts_399only.CSV", header=TRUE)
+
 
 # Compile the raw data from different observers and life history stages
 CH_raw_multiply_marked_total_egg_count <- CH_multiply_marked_egg_count$total_egg_count
-#LM_raw_multiply_marked_total_egg_count <- LM_multiply_marked_egg_count$total_egg_count
+LM_raw_multiply_marked_total_egg_count <- LM_multiply_marked_egg_count$total_egg_count
 LH_raw_multiply_marked_total_egg_count <- LH_multiply_marked_egg_count$total_egg_count
-#compiled_raw_multiply_marked_dataset <- cbind(MS_multiply_marked_adult_phenotypic_class_counts, CH_raw_multiply_marked_total_egg_count, LH_raw_multiply_marked_total_egg_count)
+compiled_raw_multiply_marked_dataset <- cbind(MS_multiply_marked_adult_phenotypic_class_counts, CH_raw_multiply_marked_total_egg_count, LM_raw_multiply_marked_total_egg_count)
+compiled_raw_multiply_marked_dataset <- cbind(MS_multiply_marked_adult_phenotypic_class_counts, CH_raw_multiply_marked_total_egg_count, LH_raw_multiply_marked_total_egg_count)
 
 # Split treatment_id into treatment and genotype for multiply-marked dataset
 treatment_genotype_mm <- strsplit(as.character(compiled_raw_multiply_marked_dataset$treatment_id), "_")
@@ -87,11 +109,12 @@ write.csv(compiled_raw_multiply_marked_dataset, "../../Summaries and Outputs/4_c
 
 # Transform individual raw egg counts to address undercounting
 CH_transformed_multiply_marked_total_egg_count <- (CH_raw_multiply_marked_total_egg_count - 6.479979) / 0.9224861    
-#LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 4.866269) / 0.8351445   
+LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 4.866269) / 0.8351445   
 LH_transformed_multiply_marked_total_egg_count <- (LH_raw_multiply_marked_total_egg_count - 2.5569307 ) / 0.8528595 
 transformed_mean_multiply_marked_total_egg_count <- round((CH_transformed_multiply_marked_total_egg_count + LH_transformed_multiply_marked_total_egg_count) / 2)
-#derived_multiply_marked_dataset <- cbind(compiled_raw_multiply_marked_dataset, transformed_mean_multiply_marked_total_egg_count)
-
+transformed_mean_multiply_marked_total_egg_count <- round((CH_transformed_multiply_marked_total_egg_count + LM_transformed_multiply_marked_total_egg_count) / 2)
+derived_multiply_marked_dataset <- cbind(compiled_raw_multiply_marked_dataset, transformed_mean_multiply_marked_total_egg_count)
+derived_multiply_marked_dataset <-derived_multiply_marked_dataset %>% filter(!is.na(total_adult_count))
 write.csv(derived_multiply_marked_dataset, "../../Summaries and Outputs/5_derived_multiply_marked_dataset.csv", row.names = TRUE)
 
 # Calculate the per vial viability of females, males, and total under the 1:1 primary sex ratio assumption
@@ -102,58 +125,66 @@ multiply_marked_viability_dataset <- cbind(derived_multiply_marked_dataset, deri
 write.csv(multiply_marked_viability_dataset, "../../Summaries and Outputs/6_multiply_marked_viability_dataset.csv", row.names = TRUE)
 
 # Compute the overall mean viabilities for reporting in main text 
-overall_multiply_marked_viability <- mean(derived_multiply_marked_total_viability)
-female_multiply_marked_viability <- mean(derived_multiply_marked_female_viability)
-male_multiply_marked_viability <- mean(derived_multiply_marked_male_viability)
+overall_multiply_marked_viability <- mean(derived_multiply_marked_total_viability, na.rm = TRUE)
+female_multiply_marked_viability <- mean(derived_multiply_marked_female_viability, na.rm = TRUE)
+male_multiply_marked_viability <- mean(derived_multiply_marked_male_viability, na.rm = TRUE)
 
-# Generate a data frame for sex-specific viability effects in the multiply marked crosses
-female_vector <- rep("Female", nrow(multiply_marked_viability_dataset))
-male_vector <- rep("Male", nrow(multiply_marked_viability_dataset))
-multiply_marked_female_viabilities <- data.frame(
-  Sex = female_vector,
-  Cross = multiply_marked_viability_dataset$cross_id,
-  Brood = multiply_marked_viability_dataset$brood_id,
-  Treatment = multiply_marked_viability_dataset$treatment,
-  Genotype = multiply_marked_viability_dataset$genotype,
-  Viability = multiply_marked_viability_dataset$derived_multiply_marked_female_viability
+# Print overall viability statistics
+cat("Overall multiply marked viability:", overall_multiply_marked_viability, "\n")
+cat("Female multiply marked viability:", female_multiply_marked_viability, "\n")
+cat("Male multiply marked viability:", male_multiply_marked_viability, "\n")
+
+# Generate a long-format data frame for sex-specific viability effects in the multiply marked crosses
+multiply_marked_viability_long <- data.frame(
+  Cross = rep(multiply_marked_viability_dataset$cross_id, times = 2),
+  Brood = rep(multiply_marked_viability_dataset$brood_id, times = 2),
+  Treatment = rep(multiply_marked_viability_dataset$treatment, times = 2),
+  Genotype = rep(multiply_marked_viability_dataset$genotype, times = 2),
+  Data_Collector = rep(multiply_marked_viability_dataset$data_collector, times = 2),
+  Sex = factor(rep(c("Female", "Male"), each = nrow(multiply_marked_viability_dataset))),
+  Viability = c(multiply_marked_viability_dataset$derived_multiply_marked_female_viability,
+                multiply_marked_viability_dataset$derived_multiply_marked_male_viability)
 )
-multiply_marked_male_viabilities <- data.frame(
-  Sex = male_vector,
-  Cross = multiply_marked_viability_dataset$cross_id,
-  Brood = multiply_marked_viability_dataset$brood_id,
-  Treatment = multiply_marked_viability_dataset$treatment,
-  Genotype = multiply_marked_viability_dataset$genotype,
-  Viability = multiply_marked_viability_dataset$derived_multiply_marked_male_viability
-)
-multiply_marked_viability_anova_input <- rbind(multiply_marked_female_viabilities, multiply_marked_male_viabilities)
 
-# Convert variable "Cross" to a categorical factor and "Brood" to a numeric value
-multiply_marked_viability_anova_input$Cross <- factor(multiply_marked_viability_anova_input$Cross)
-multiply_marked_viability_anova_input$Brood <- factor(multiply_marked_viability_anova_input$Brood)
-multiply_marked_viability_anova_input$Brood <- as.numeric(multiply_marked_viability_anova_input$Brood)
-multiply_marked_viability_anova_input$Treatment <- factor(multiply_marked_viability_anova_input$Treatment)
-multiply_marked_viability_anova_input$Genotype <- factor(multiply_marked_viability_anova_input$Genotype)
+# Convert variables to appropriate types
+multiply_marked_viability_long$Cross <- factor(multiply_marked_viability_long$Cross)
+multiply_marked_viability_long$Brood <- factor(multiply_marked_viability_long$Brood)
+multiply_marked_viability_long$Treatment <- factor(multiply_marked_viability_long$Treatment)
+multiply_marked_viability_long$Genotype <- factor(multiply_marked_viability_long$Genotype)
+multiply_marked_viability_long$Data_Collector <- factor(multiply_marked_viability_long$Data_Collector)
+multiply_marked_viability_long$Sex <- factor(multiply_marked_viability_long$Sex)
 
-multiply_marked_viability_means_tgs <- multiply_marked_viability_anova_input %>%
-  group_by(Treatment, Genotype) %>%
-  summarise(
-    Mean_Viability = mean(Viability, na.rm = TRUE),
-    .groups = "drop"
-  )
+# Save the long-format dataset
+write.csv(multiply_marked_viability_long, 
+          "../../Summaries and Outputs/7_multiply_marked_viability_long.csv", 
+          row.names = FALSE)
 
-# Check
-print(multiply_marked_viability_means_tgs)
-# Merge back to your ANOVA dataset by Treatment × Genotype
-multiply_marked_viability_anova_input <- multiply_marked_viability_anova_input %>%
-  left_join(multiply_marked_viability_means_tgs, by = c("Treatment", "Genotype"))
+# Run ANOVA on viability
+multiply_marked_viability_anova <- aov(Viability ~ Treatment * Genotype * Sex * Brood * Data_Collector, 
+                                       data = multiply_marked_viability_long)
 
-# Remove rows where Viability (or Viability_mean_tg if you are using mean per Treatment × Genotype) is NA
-cleaned_multiply_marked_viability_anova_input <- multiply_marked_viability_anova_input %>%
-  filter(!is.na(Mean_Viability))
-
-multiply_marked_viability_anova <- aov(Mean_Viability ~ Treatment * Genotype * Sex * Brood ,data = cleaned_multiply_marked_viability_anova_input)
-
+# Display ANOVA results
 summary(multiply_marked_viability_anova)
+
+library(emmeans)
+multiply_marked_emm <- emmeans(multiply_marked_viability_anova, ~ Treatment * Genotype * Data_Collector)
+ pairs(multiply_marked_emm)
+ 
+ # Compute Treatment × Genotype means (matching the marker-free approach)
+ multiply_marked_viability_means_tg <- multiply_marked_viability_long %>%
+   group_by(Treatment, Genotype) %>%
+   summarise(
+     Mean_Viability = mean(Viability, na.rm = TRUE),
+     SD_Viability = sd(Viability, na.rm = TRUE),
+     N = n(),
+     .groups = "drop"
+   )
+ 
+ # Save the summary statistics
+ write.csv(multiply_marked_viability_means_tg, 
+           "../../Summaries and Outputs/8_multiply_marked_viability_summary.csv", 
+           row.names = FALSE)
+ 
 
 # Input for Counting Model ------------------------------------------------
 #individual vials-------------
@@ -174,13 +205,30 @@ treatment_genotype <- strsplit(
 
 derived_multiply_marked_dataset$Treatment <- sapply(treatment_genotype, `[`, 1)
 derived_multiply_marked_dataset$Genotype  <- sapply(treatment_genotype, `[`, 2)
+derived_multiply_marked_dataset$Brood <- derived_multiply_marked_dataset$brood_id
 
 # 3) Join Mean_Viability ONCE (markerfree viability)
 derived_multiply_marked_dataset <- derived_multiply_marked_dataset %>%
-  left_join(viability_means_tgs, by = c("Treatment", "Genotype"))
+  left_join(viability_means_tgs, by = c("Treatment", "Genotype", "Brood"))
+
+#2derived_multiply_marked_dataset <- derived_multiply_marked_dataset %>%
+  left_join(viability_means_tgs, by = c("Treatment"))
+
+
+#1)derived_multiply_marked_dataset <- derived_multiply_marked_dataset %>%
+  mutate(
+    Mean_Viability = case_when(
+      Treatment == "0.5x"  ~ 0.791,
+      Treatment == "0.75x" ~ 0.790,
+      Treatment == "1.0x"  ~ 0.789,
+      Treatment == "1.25x" ~ 0.842,
+      Treatment == "1.5x"  ~ 0.894,
+      Treatment == "2.0x"  ~ 0.998
+    )
+  )
 
 # 4) Prune columns
-pruned_derived_multiply_marked_dataset <- derived_multiply_marked_dataset[  , -c(1, 2, 3, 5, 6, 135, 136, 137, 138, 139, 140, 141, 142, 144, 145) ]
+pruned_derived_multiply_marked_dataset <- derived_multiply_marked_dataset[  , -c(1, 2, 3, 5, 6, 135, 136, 137, 138, 139, 140, 141, 142, 144, 145,146) ]
 
 # 5) Rename for multilocus format
 female_viability_vector <- pruned_derived_multiply_marked_dataset$Mean_Viability
@@ -217,8 +265,8 @@ pooled_dataset <- derived_multiply_marked_dataset %>%
     # sum eggs and lethals
     CH_raw_multiply_marked_total_egg_count =
       sum(CH_raw_multiply_marked_total_egg_count, na.rm = TRUE),
-    LH_raw_multiply_marked_total_egg_count =
-      sum(LH_raw_multiply_marked_total_egg_count, na.rm = TRUE),
+    LM_raw_multiply_marked_total_egg_count =
+      sum(LM_raw_multiply_marked_total_egg_count, na.rm = TRUE),
     transformed_mean_multiply_marked_total_egg_count =
       sum(transformed_mean_multiply_marked_total_egg_count, na.rm = TRUE),
     count_lethal_zygotes =

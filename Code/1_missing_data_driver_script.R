@@ -1,7 +1,7 @@
 #setwd("Raw Data/") # Please use Raw Data as working directory
-#setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/3")
-setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/2")
-#setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/1")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/3")
+#setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/2")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/1")
 
 
 # Compute the egg correction

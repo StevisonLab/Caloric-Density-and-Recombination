@@ -1,5 +1,0 @@
-"","female_wildtype_viability","male_wildtype_viability","female_mutant_viability","male_mutant_viability","G_statistic","degrees_of_freedom","p_value"
-"H0:",1,1,1,1,NA,4,NA
-"H1:",0.610402120000516,0.610402120000516,0.610402120000516,0.610402120000516,NA,3,NA
-"H2:",1,1,-0.558391211001476,NA,NA,2,NA
-"H3:",-0.558391211001476,NA,NA,NA,NA,NA,NA

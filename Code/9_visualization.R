@@ -1,4 +1,8 @@
 setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/3")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/2")
+setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/1")
+
 
 # Load necessary libraries
 library(ggplot2)
@@ -42,9 +46,11 @@ df$GB <- as.factor(df$GB)
 df$People <- as.factor(df$People)
 df$recombination_fractions <- as.numeric(df$recombination_fractions)
 
+#write.csv(df, "df.csv", row.names = FALSE)
+
 ###delete the outlier (just checking)
 #statisticaly
-#df <- df %>%
+df <- df %>%
   group_by(Diet, GB) %>%
   filter(
     recombination_fractions >= quantile(recombination_fractions, 0.25, na.rm = TRUE) -
@@ -58,17 +64,18 @@ df$recombination_fractions <- as.numeric(df$recombination_fractions)
 #Biological
 boxplot(recombination_fractions ~ Diet * GB, data = df)
 
-df <- df %>%filter(recombination_fractions < 1000)  # example threshold
-df <- df %>%filter(People %in% c("M","L","S")) # example threshold
+df <- df %>%filter(recombination_fractions < 1000)  
+#df <- df %>%filter(People %in% c("M","L","S"))
 
-df <- df %>%filter(!(Diet == "0.5X" & People == "C"))
+#df <- df %>%filter(!(Diet == "0.5x" & People == "C"))
+#df <- df %>%filter(!(Diet == "0.5x" & People == "L"))
 
 
 # 3. ANOVA
 anova_result <- aov(recombination_fractions ~  Brood * Diet * GB * People, data = df)
 anova_result <- aov(recombination_fractions ~ People, data = df)
 
-anova_result <- aov(recombination_fractions ~ Brood * Diet * GB, data = df)
+anova_result <- aov(recombination_fractions ~ Brood * Diet , data = df)
 summary(anova_result)
 
 # Tidy the ANOVA model and save to CSV
@@ -87,18 +94,19 @@ anova_summary <- tidy(anova_result) %>%
 TukeyHSD(anova_result)
 
 # 5. Estimated marginal means and CLD
-emm <- emmeans(anova_result, ~ People* GB)
+emm <- emmeans(anova_result, ~ Diet* GB*People)
 cld <- cld(emm, Letters = letters)
 
 plot_data <- cld %>%
   mutate(
+  #  Brood=factor(Brood),
     GB = factor(GB),
     People= factor(People),
-    #Diet = factor(Diet, levels = c("0.5x", "1.0x", "2.0x")),
+    Diet = factor(Diet, levels = c("0.5x", "1.0x", "2.0x")),
     .group = trimws(.group) # remove extra spaces
   )
 # Plot
-ggplot(plot_data, aes(x = People, y = emmean, color = GB, group = GB)) +
+ggplot(plot_data, aes(x = People, y = emmean, color = GB, group = Diet)) +
   geom_point(position = position_dodge(0.4), size = 3) +
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
                 width = 0.2, position = position_dodge(0.4)) +
@@ -126,6 +134,28 @@ ggplot(df, aes(x = Brood, y = recombination_fractions, group = Diet, color = Die
   ) +
   theme_minimal()
 
+ggplot(df, aes(x = Diet, y = recombination_fractions, fill = as.factor(GB))) +
+  geom_boxplot() +
+  facet_wrap(~GB, scales = "fixed", nrow = 1) +  # one panel per genotype
+  labs(
+    title = "RR G X E",
+    x = "Treatments",
+    y = "RR"
+  ) +
+  theme_minimal(base_size = 25) +
+  theme(
+    legend.position = "none",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(size = 35, face = "bold", hjust = 0.5)
+  ) +
+  scale_fill_manual(values = c(
+    "217" = "#8dd3c7",
+    "391" = "#ffffb3",
+    "491" = "#80b1d3",
+    "399" = "#9e9ac8",
+    "42"  = "#fb8072"
+  ))
 #per strain brood 
 df$Diet_GB <- paste0(df$GB, "_", df$Diet)
 
