@@ -8,13 +8,19 @@ library(tidyr)
 
 # Set working directory (uncomment if running locally)
 setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/3")
-
-MOTHERS_PER_VIAL <- 3
 ALPHA <- 0.05
 traits <- c("Fecundity", "Fertility", "Viability")
 
 # Load Datasets
 multiply_marked_viability_dataset <- read.csv("6_multiply_marked_viability_dataset.csv")
+# mothers per vial for marker-present
+mothers_per_vial <- read.csv("3_mom.csv")
+
+multiply_marked_viability_dataset <- multiply_marked_viability_dataset %>%
+  left_join(mothers_per_vial, by = c("cross_id", "brood_id"))
+
+
+
 df <- read.csv("df.csv")
 df <- df %>%
   #group_by(Diet, GB, Brood) %>%
@@ -31,12 +37,15 @@ df <- df %>%
 marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
-    Fecundity = transformed_mean_multiply_marked_total_egg_count / MOTHERS_PER_VIAL,
-    Fertility = total_adult_count / MOTHERS_PER_VIAL,
+    Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
+    Fertility = total_adult_count / female_in_vial,
     Viability = pmin(pmax(derived_multiply_marked_total_viability * 100, 0), 100)
   ) %>%
   select(VialID = cross_id, Data_collector = data_collector, Treatment = treatment, 
          Genotype = genotype, Brood = brood_id, Dataset, Fecundity, Fertility, Viability)
+
+marker_present_life_history <- marker_present_life_history %>%
+  filter(is.finite(Fecundity))   # keeps only finite values
 
 # 1.3 Combine and Outlier Removal
 life_history_all <- bind_rows( marker_present_life_history) %>%

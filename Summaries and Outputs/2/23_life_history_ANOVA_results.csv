@@ -3,27 +3,27 @@
 Marker-free_Fecundity 
 =============================
                           Df Sum Sq Mean Sq F value Pr(>F)
-Treatment                  2    383  191.45   2.221  0.113
-Genotype                   1    172  172.02   1.996  0.160
-Brood                      6    143   23.80   0.276  0.947
-Treatment:Genotype         2    325  162.70   1.888  0.156
-Treatment:Brood           12   1196   99.68   1.157  0.322
-Genotype:Brood             6    417   69.57   0.807  0.566
-Treatment:Genotype:Brood  12    550   45.81   0.531  0.891
-Residuals                126  10860   86.19               
+Treatment                  2   1064   531.8   2.221  0.113
+Genotype                   1    478   477.8   1.996  0.160
+Brood                      6    397    66.1   0.276  0.947
+Treatment:Genotype         2    904   452.0   1.888  0.156
+Treatment:Brood           12   3323   276.9   1.157  0.322
+Genotype:Brood             6   1159   193.2   0.807  0.566
+Treatment:Genotype:Brood  12   1527   127.2   0.531  0.891
+Residuals                126  30166   239.4               
 
 =============================
 Marker-free_Fertility 
 =============================
                           Df Sum Sq Mean Sq F value   Pr(>F)    
-Treatment                  2   1041   520.3  16.577 4.06e-07 ***
-Genotype                   1   1622  1621.9  51.673 5.11e-11 ***
-Brood                      6    967   161.2   5.137 9.40e-05 ***
-Treatment:Genotype         2    434   217.1   6.918  0.00141 ** 
-Treatment:Brood           12    242    20.2   0.642  0.80279    
-Genotype:Brood             6     40     6.7   0.212  0.97243    
-Treatment:Genotype:Brood  12    286    23.9   0.760  0.68987    
-Residuals                126   3955    31.4                     
+Treatment                  2   2891    1445  16.577 4.06e-07 ***
+Genotype                   1   4505    4505  51.673 5.11e-11 ***
+Brood                      6   2687     448   5.137 9.40e-05 ***
+Treatment:Genotype         2   1206     603   6.918  0.00141 ** 
+Treatment:Brood           12    672      56   0.642  0.80279    
+Genotype:Brood             6    111      18   0.212  0.97243    
+Treatment:Genotype:Brood  12    795      66   0.760  0.68987    
+Residuals                126  10986      87                     
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -46,14 +46,14 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 Marker-present_Fecundity 
 =============================
                           Df Sum Sq Mean Sq F value   Pr(>F)    
-Treatment                  2   4081  2040.7  26.464 5.52e-10 ***
-Genotype                   4   1782   445.4   5.777 0.000313 ***
-Brood                      6   2882   480.3   6.228 1.34e-05 ***
-Treatment:Genotype         8   3350   418.8   5.431 1.05e-05 ***
-Treatment:Brood           12   1082    90.2   1.170 0.314983    
-Genotype:Brood            24   1336    55.7   0.722 0.818606    
-Treatment:Genotype:Brood  48   2201    45.8   0.595 0.976757    
-Residuals                102   7865    77.1                     
+Treatment                  2   1839   919.5  11.329 3.60e-05 ***
+Genotype                   4   3026   756.5   9.321 1.84e-06 ***
+Brood                      6   3537   589.5   7.263 1.78e-06 ***
+Treatment:Genotype         8   1879   234.9   2.894  0.00601 ** 
+Treatment:Brood           12   1254   104.5   1.287  0.23762    
+Genotype:Brood            24   1461    60.9   0.750  0.78760    
+Treatment:Genotype:Brood  48   2449    51.0   0.629  0.96257    
+Residuals                102   8279    81.2                     
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -61,14 +61,14 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 Marker-present_Fertility 
 =============================
                           Df Sum Sq Mean Sq F value   Pr(>F)    
-Treatment                  2  895.0   447.5  18.899 1.04e-07 ***
-Genotype                   4  454.7   113.7   4.801  0.00137 ** 
-Brood                      6  821.9   137.0   5.786 3.23e-05 ***
-Treatment:Genotype         8  978.9   122.4   5.168 2.00e-05 ***
-Treatment:Brood           12  424.0    35.3   1.492  0.13909    
-Genotype:Brood            24  391.4    16.3   0.689  0.85204    
-Treatment:Genotype:Brood  48  586.0    12.2   0.516  0.99408    
-Residuals                102 2415.1    23.7                     
+Treatment                  2  266.0  133.01   5.225  0.00691 ** 
+Genotype                   4  888.3  222.08   8.723 4.26e-06 ***
+Brood                      6 1003.8  167.29   6.571 6.83e-06 ***
+Treatment:Genotype         8  483.1   60.39   2.372  0.02195 *  
+Treatment:Brood           12  500.4   41.70   1.638  0.09263 .  
+Genotype:Brood            24  440.4   18.35   0.721  0.81972    
+Treatment:Genotype:Brood  48  658.2   13.71   0.539  0.99079    
+Residuals                102 2596.8   25.46                     
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 

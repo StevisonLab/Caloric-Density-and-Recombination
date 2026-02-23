@@ -1,16 +1,16 @@
 # ============================================================
 # CLEANED & ORGANIZED: RR vs Viability PLOT
 # ============================================================
-
 library(dplyr)
 library(ggplot2)
+library(purrr)
 library(tidyr)
 
 # Set working directory (uncomment if running locally)
 setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/2")
 
 # Constants
-MOTHERS_PER_VIAL <- 5
+MOTHERS_PER_VIAL <- 3
 traits <- c("Fecundity", "Fertility", "Viability")
 
 # ============================================================
@@ -18,6 +18,12 @@ traits <- c("Fecundity", "Fertility", "Viability")
 # ============================================================
 
 multiply_marked_viability_dataset <- read.csv("6_multiply_marked_viability_dataset.csv")
+# mothers per vial for marker-present
+mothers_per_vial <- read.csv("2_mom.csv")
+
+multiply_marked_viability_dataset <- multiply_marked_viability_dataset %>%
+  left_join(mothers_per_vial, by = c("cross_id", "brood_id"))
+
 df <- read.csv("df.csv")
 
 # Filter extreme outliers in recombination data
@@ -38,8 +44,8 @@ df <- df %>%
 marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
-    Fecundity = transformed_mean_multiply_marked_total_egg_count / MOTHERS_PER_VIAL,
-    Fertility = total_adult_count /MOTHERS_PER_VIAL ,
+    Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
+    Fertility = total_adult_count /female_in_vial ,
     Viability = pmin(pmax(derived_multiply_marked_total_viability * 100, 0), 100)
   ) %>%
   select(VialID = cross_id, Data_collector = data_collector, Treatment = treatment, 
@@ -86,7 +92,7 @@ combined_group_data <- inner_join(recomb_summary, life_history_summary,
 p3_faceted <- ggplot(combined_group_data,
                      aes(x = mean_Viability, y = mean_RR, color = Genotype)) +
   geom_point(size = 3, alpha = 0.8) +
-  geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 3) +
   facet_wrap(~ Treatment) +
   labs(
     title = "Recombination Rate vs Viability by Treatment & Genotype",

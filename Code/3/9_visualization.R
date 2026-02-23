@@ -63,7 +63,7 @@ df <- df %>%filter(recombination_fractions < 1000)
 
 # 3. ANOVA
 anova_result <- aov(recombination_fractions ~ Brood + GB + Diet + People, data = df)
-anova_result <- aov(recombination_fractions ~ Brood * Diet * GB *People, data = df)
+anova_result <- aov(recombination_fractions ~ Brood * Diet * GB , data = df)
 summary(anova_result)
 anova_summary <- tidy(anova_result) %>%
   mutate(

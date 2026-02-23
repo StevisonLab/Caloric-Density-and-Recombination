@@ -4,7 +4,11 @@ setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/2")
 marker_free_viability_dataset <- read.csv("F_marker_free_viability_dataset.csv")
 
 multiply_marked_viability_dataset<- read.csv("6_multiply_marked_viability_dataset.csv")
+# mothers per vial for marker-present
+mothers_per_vial <- read.csv("2_mom.csv")
 
+multiply_marked_viability_dataset <- multiply_marked_viability_dataset %>%
+  left_join(mothers_per_vial, by = c("cross_id", "brood_id"))
 
 # ============================================================
 # LIFE-HISTORY TRAITS + ANOVA (with Data_collector)
@@ -14,7 +18,7 @@ multiply_marked_viability_dataset<- read.csv("6_multiply_marked_viability_datase
 library(dplyr)
 library(ggplot2)
 
-MOTHERS_PER_VIAL <- 5
+MOTHERS_PER_VIAL <- 3
 ALPHA <- 0.05
 traits <- c("Fecundity", "Fertility", "Viability")
 
@@ -50,8 +54,8 @@ marker_free_life_history <- marker_free_viability_dataset %>%
 marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
-    Fecundity = transformed_mean_multiply_marked_total_egg_count / MOTHERS_PER_VIAL,
-    Fertility = total_adult_count / MOTHERS_PER_VIAL,
+    Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
+    Fertility = total_adult_count / female_in_vial,
     Viability = pmin(pmax(derived_multiply_marked_total_viability * 100, 0), 100)
   ) %>%
   select(
@@ -87,30 +91,6 @@ life_history_all <- bind_rows(
   )
 
 # ============================================================
-# REMOVE OUTLIERS FUNCTION
-# ============================================================
-#remove_outliers <- function(df, trait) {
-  df %>%
-    group_by(Dataset, Treatment, Genotype, Data_collector) %>%
-    mutate(
-      Q1  = quantile(.data[[trait]], 0.25, na.rm = TRUE),
-      Q3  = quantile(.data[[trait]], 0.75, na.rm = TRUE),
-      IQR = Q3 - Q1,
-      Lower = Q1 - 1.5 * IQR,
-      Upper = Q3 + 1.5 * IQR,
-      Is_Outlier = .data[[trait]] < Lower | .data[[trait]] > Upper
-    ) %>%
-    ungroup() %>%
-    filter(!Is_Outlier) %>%
-    select(-Q1, -Q3, -IQR, -Lower, -Upper, -Is_Outlier)
-}
-
-# Apply outlier removal for each trait sequentially
-#for(trait in traits) {
-  life_history_all <- remove_outliers(life_history_all, trait)
-}
-
-# ============================================================
 # PLOTTING FUNCTION
 # ============================================================
 plot_trait <- function(trait_name, y_label) {
@@ -123,7 +103,7 @@ plot_trait <- function(trait_name, y_label) {
     geom_boxplot(alpha = 0.7, outlier.shape = NA, position = position_dodge(width = 0.8)) +
     # geom_jitter(width = 0.15, size = 1.5, alpha = 0.6, color = "black") +
     facet_wrap(~ Dataset) +
-    theme_classic(base_size = 14) +
+    theme_classic(base_size = 24) +
     labs(
       title = trait_name,
       y = y_label,
@@ -170,97 +150,63 @@ ggsave(
 
 
 # ============================================================
-# ANOVA
+# ANOVA — SEPARATE BY DATASET AND TRAIT (NO PLOTTING)
 # ============================================================
-anova_results <- list()
-
 run_anova <- function(df, trait) {
   aov(
-    # as.formula(paste(trait, "~ Treatment * Genotype * Brood + Data_collector")),
-    as.formula(paste(trait, "~ Treatment * Genotype * Brood ")),
-    
+    as.formula(paste(trait, "~ Treatment * Genotype * Brood + Data_collector")),
     data = df
   )
 }
 
-has_significant_effect <- function(aov_model) {
-  pvals <- summary(aov_model)[[1]][["Pr(>F)"]]
-  any(pvals < ALPHA, na.rm = TRUE)
-}
-
-plot_if_significant <- function(df, trait, dataset_label) {
+for (dataset_name in unique(as.character(life_history_all$Dataset))) {
   
-  model <- run_anova(df, trait)
-  anova_results[[paste(dataset_label, trait, sep = "_")]] <<- summary(model)
-  
-  if (has_significant_effect(model)) {
-    print(
-      ggplot(df,
-             aes(
-               x = Data_collector,
-               y = .data[[trait]],
-               color = Genotype,
-               fill = Treatment
-             )) +
-        geom_boxplot(alpha = 0.7, outlier.shape = NA, position = position_dodge(width = 0.8)) +
-        #  geom_jitter(width = 0.15, size = 1.5, alpha = 0.6, color = "black") +
-        facet_wrap(~ Dataset) +
-        theme_classic(base_size = 14) +
-        labs(
-          title = paste(dataset_label, trait, "(Significant ANOVA)"),
-          x = "Data Collector",
-          y = ifelse(trait == "Viability", "Viability (%)", trait)
-        )
-    )
-  }
-}
-
-# -----------------------------
-# RUN ANOVAS SEPARATELY
-# -----------------------------
-for (dataset_name in levels(life_history_all$Dataset)) {
-  
-  df_subset <- life_history_all %>% filter(Dataset == dataset_name)
+  df_subset <- life_history_all %>%
+    filter(Dataset == dataset_name)
   
   for (trait in traits) {
-    plot_if_significant(df_subset, trait, dataset_name)
+    
+    # remove NA/NaN/Inf values per trait
+    df_trait <- df_subset %>%
+      filter(is.finite(.data[[trait]]))
+    
+    # only run ANOVA if there is enough data
+    if (nrow(df_trait) > 1) {
+      model <- run_anova(df_trait, trait)
+      
+      anova_table <- as.data.frame(summary(model)[[1]])
+      anova_table$Term <- rownames(anova_table)
+      anova_table$Dataset <- dataset_name
+      anova_table$Trait <- trait
+      
+      rownames(anova_table) <- NULL
+      
+      write.csv(
+        anova_table,
+        paste0(
+          "../../Summaries and Outputs/2/23_ANOVA_",
+          dataset_name, "_",
+          trait,
+          ".csv"
+        ),
+        row.names = FALSE
+      )
+    }
   }
 }
 
-# -----------------------------
-# SAVE ALL ANOVA RESULTS
-# -----------------------------
-sink("../../Summaries and Outputs/2/23_life_history_ANOVA_results.csv")
-
-for (name in names(anova_results)) {
-  cat("\n=============================\n")
-  cat(name, "\n")
-  cat("=============================\n")
-  print(anova_results[[name]])
-}
-
-sink()
-
-# -----------------------------
+# ============================================================
 # SAVE CLEANED DATASET
-# -----------------------------
-write.csv(life_history_all, "../../Summaries and Outputs/2/24_Life_History_All_Cleaned.csv", row.names = FALSE)
+# ============================================================
+write.csv(
+  life_history_all,
+  "../../Summaries and Outputs/2/24_Life_History_All_Cleaned.csv",
+  row.names = FALSE
+)
 
-#mean per genotype x treatment
-life_history_summary <- life_history_all %>%
-  group_by(Dataset, Treatment, Genotype) %>%
-  summarise(
-    n = n(),
-    mean_Fecundity = mean(Fecundity, na.rm = TRUE),
-    se_Fecundity   = sd(Fecundity, na.rm = TRUE) / sqrt(n),
-    
-    mean_Fertility = mean(Fertility, na.rm = TRUE),
-    se_Fertility   = sd(Fertility, na.rm = TRUE) / sqrt(n),
-    
-    mean_Viability = mean(Viability, na.rm = TRUE),
-    se_Viability   = sd(Viability, na.rm = TRUE) / sqrt(n),
-    .groups = "drop"
-  )
+# ============================================================
+# SUMMARY MEANS BY DATASET × TREATMENT × GENOTYPE
+# ============================================================
 life_history_summary <- life_history_all %>%
   group_by(Dataset, Treatment, Genotype) %>%
   summarise(
@@ -269,6 +215,7 @@ life_history_summary <- life_history_all %>%
     Viability = mean(Viability, na.rm = TRUE),
     .groups = "drop"
   )
+
 write.csv(
   life_history_summary,
   "../../Summaries and Outputs/2/25_life_history_summary_by_dataset.csv",

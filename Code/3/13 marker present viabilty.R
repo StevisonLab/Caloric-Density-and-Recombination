@@ -4,14 +4,18 @@ setwd("~/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/3")
 #Prepare marker-present life history---------
 
 multiply_marked_viability_dataset<- read.csv("6_multiply_marked_viability_dataset.csv")
+# mothers per vial for marker-present
+mothers_per_vial <- read.csv("3_mom.csv")
 
-MOTHERS_PER_VIAL <- 3
+multiply_marked_viability_dataset <- multiply_marked_viability_dataset %>%
+  left_join(mothers_per_vial, by = c("cross_id", "brood_id"))
+
 
 marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
-    Fecundity = transformed_mean_multiply_marked_total_egg_count / MOTHERS_PER_VIAL,
-    Fertility = total_adult_count / MOTHERS_PER_VIAL,
+    Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
+    Fertility = total_adult_count / female_in_vial,
     Viability = pmin(pmax(derived_multiply_marked_total_viability * 100, 0), 100)
   ) %>%
   select(
@@ -30,6 +34,11 @@ marker_present_life_history <- multiply_marked_viability_dataset %>%
     Brood     = factor(Brood),
     Dataset   = factor(Dataset),
     Data_collector = factor(Data_collector))
+
+
+
+marker_present_life_history <- marker_present_life_history %>%
+  filter(is.finite(Fecundity))   # keeps only finite values
 
 # 2. Run ANOVA for Viability
 

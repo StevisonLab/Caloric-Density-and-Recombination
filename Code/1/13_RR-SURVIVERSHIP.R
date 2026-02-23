@@ -18,11 +18,23 @@ traits <- c("Fecundity", "Fertility", "Viability")
 # ============================================================
 
 multiply_marked_viability_dataset <- read.csv("6_multiply_marked_viability_dataset.csv")
-df <- read.csv("df.csv")
+# mothers per vial for marker-present
+mothers_per_vial <- read.csv("1_mom.csv")
 
-# Filter extreme outliers in recombination data
+multiply_marked_viability_dataset <- multiply_marked_viability_dataset %>%
+  left_join(mothers_per_vial, by = c("cross_id", "brood_id"))
+
+df <- read.csv("df.csv")
 df <- df %>%
-  filter(recombination_fractions < 1000)
+  #group_by(Diet, GB, Brood) %>%
+  filter(
+    recombination_fractions >= quantile(recombination_fractions, 0.25, na.rm = TRUE) -
+      1.5 * IQR(recombination_fractions, na.rm = TRUE),
+    recombination_fractions <= quantile(recombination_fractions, 0.75, na.rm = TRUE) +
+      1.5 * IQR(recombination_fractions, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
 
 # ============================================================
 # STEP 2: PROCESS LIFE HISTORY DATA
@@ -31,8 +43,8 @@ df <- df %>%
 marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
-    Fecundity = transformed_mean_multiply_marked_total_egg_count / MOTHERS_PER_VIAL,
-    Fertility = total_adult_count / MOTHERS_PER_VIAL,
+    Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
+    Fertility = total_adult_count / female_in_vial,
     Viability = pmin(pmax(derived_multiply_marked_total_viability * 100, 0), 100)
   ) %>%
   select(VialID = cross_id, Data_collector = data_collector, Treatment = treatment, 
@@ -40,25 +52,6 @@ marker_present_life_history <- multiply_marked_viability_dataset %>%
 
 life_history_all <- marker_present_life_history %>%
   mutate(across(c(Treatment, Genotype, Brood, Dataset, Data_collector), factor))
-
-# Function to remove outliers
-#remove_outliers <- function(df, trait) {
-  df %>%
-    group_by(Dataset, Treatment, Genotype, Data_collector) %>%
-    mutate(
-      Q1 = quantile(.data[[trait]], 0.25, na.rm = TRUE),
-      Q3 = quantile(.data[[trait]], 0.75, na.rm = TRUE),
-      IQR = Q3 - Q1,
-      Is_Outlier = .data[[trait]] < (Q1 - 1.5 * IQR) | .data[[trait]] > (Q3 + 1.5 * IQR)
-    ) %>%
-    ungroup() %>%
-    filter(!Is_Outlier) %>%
-    select(-Q1, -Q3, -IQR, -Is_Outlier)
-}
-
-#for(trait in traits) {
-  life_history_all <- remove_outliers(life_history_all, trait)
-}
 
 # ============================================================
 # STEP 3: MERGE WITH RECOMBINATION DATA
@@ -89,7 +82,7 @@ dataset_clean <- combined_vial_data %>%
 p3_faceted <- ggplot(dataset_clean, 
                      aes(x = Viability, y = RR, color = Genotype)) +
   geom_point(size = 2, alpha = 0.8) +
-  geom_smooth(method = "lm", se = FALSE, size = 1) +
+  geom_smooth(method = "lm", se = FALSE, size = 3) +
   facet_wrap(~ Treatment) +
   labs(
     title = "Recombination Rate vs Viability by Treatment & Genotype",
