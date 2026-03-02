@@ -151,14 +151,69 @@ p2=ggplot(df, aes(x = Diet, y = recombination_fractions, fill = as.factor(GB))) 
     "399" = "#9e9ac8",
     "42"  = "#fb8072"
   ))
+#reaction norm
+# Define which terms are significant (TRUE = bold)
+sig_B   <- FALSE
+sig_G   <- TRUE
+sig_E   <- FALSE
+sig_GxE <- FALSE
+
+# Helper: wrap term in bold() if significant
+fmt_term <- function(term, significant) {if (significant) paste0("bold(", term, ")") else term}
+
+# Build the label as a string expression
+eq_label <- paste0( "RR * '~' * ", fmt_term("B", sig_B), " + ", fmt_term("G", sig_G), " + ", fmt_term("E", sig_E), " + ", fmt_term("GxE", sig_GxE))
+
+p2 <- ggplot(df, 
+             aes(
+               x = Diet,
+               y = recombination_fractions,
+               group = as.factor(GB),
+               color = as.factor(GB)
+             )) +
+  stat_summary(fun = mean, geom = "line", linewidth = 3) +
+  stat_summary(fun = mean, geom = "point", size = 6) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.55) +
+  # facet_wrap(~GB, scales = "fixed", nrow = 1) +
+ # ylim(85, 100) +
+  # Add equation 
+  annotate(
+    "text",
+    x = 2,          # adjust if needed
+    y = 113.5,
+    label = eq_label,
+    parse = TRUE,
+    size = 16
+  ) +
+  labs(
+   # title = "RR G X E",
+    x = "Treatments",
+    y = "RR",
+    color = "Genotype"   # <- legend title
+  ) +
+  theme_minimal(base_size = 25) +
+  theme(
+    legend.position = "right",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(size = 35, face = "bold", hjust = 0.5)
+  ) +
+  scale_color_manual(values = c(
+    "217" = "#e41a1c",
+    "391" = "#377eb8",
+    "491" = "#4daf4a",
+    "399" = "#984ea3",
+    "42"  = "#ff7f00"
+  ))
 p2
 ggsave(
   filename = "../../Summaries and Outputs/2/18_RR_GxE.png",
   plot = p2,
-  width = 12,
+  width = 13,
   height = 6,
   dpi = 300
 )
+
 #per strain brood 
 df$Diet_GB <- paste0(df$GB, "_", df$Diet)
 

@@ -69,15 +69,15 @@ recomb_summary <- df %>%
   ) %>%
   mutate(across(c(Treatment, Genotype, Brood), factor)) %>%
   group_by(Brood, Treatment, Genotype) %>%
-  summarise(mean_RR = mean(RR, na.rm = TRUE), .groups = "drop")
+  summarise(mean_RR = median(RR, na.rm = TRUE), .groups = "drop")
 
 # Summarise life history data to group level
 life_history_summary <- life_history_all %>%
   group_by(Brood, Treatment, Genotype) %>%
   summarise(
-    mean_Viability = mean(Viability, na.rm = TRUE),
-    mean_Fecundity  = mean(Fecundity, na.rm = TRUE),
-    mean_Fertility  = mean(Fertility, na.rm = TRUE),
+    mean_Viability = median(Viability, na.rm = TRUE),
+    mean_Fecundity  = median(Fecundity, na.rm = TRUE),
+    mean_Fertility  = median(Fertility, na.rm = TRUE),
     .groups = "drop"
   )
 
@@ -85,6 +85,8 @@ life_history_summary <- life_history_all %>%
 combined_group_data <- inner_join(recomb_summary, life_history_summary,
                                   by = c("Brood", "Treatment", "Genotype"))
 
+model <- lm(mean_RR ~ mean_Viability * Treatment * Genotype + Brood, data = combined_group_data)
+anova(model)
 # ============================================================
 # STEP 4: PLOT RR vs Viability BY TREATMENT & GENOTYPE
 # ============================================================
@@ -95,9 +97,9 @@ p3_faceted <- ggplot(combined_group_data,
   geom_smooth(method = "lm", se = FALSE, linewidth = 3) +
   facet_wrap(~ Treatment) +
   labs(
-    title = "Recombination Rate vs Viability by Treatment & Genotype",
-    x = "Mean Viability (%)",
-    y = "Mean Recombination Rate",
+   # title = "Recombination Rate vs Viability by Treatment & Genotype",
+    x = "Median Viability (%)",
+    y = "Median Recombination Rate",
     color = "Genotype"
   ) +
   theme_minimal(base_size = 25) +
@@ -107,14 +109,16 @@ p3_faceted <- ggplot(combined_group_data,
     strip.text = element_text(face = "bold"),
     plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
     axis.text = element_text(size = 18),
-    axis.title = element_text(size = 22)
+    axis.title = element_text(size = 22),
+    legend.text = element_text(size = 20),
+    legend.title = element_text(size = 20)
   ) +
   scale_color_manual(values = c(
-    "217" = "#8dd3c7",
-    "391" = "#ffffb3",
-    "491" = "#80b1d3",
-    "399" = "#9e9ac8",
-    "42"  = "#fb8072"
+    "217" = "#e41a1c",  # red
+    "391" = "#377eb8",  # blue
+    "491" = "#4daf4a",  # green
+    "399" = "#984ea3",  # purple
+    "42"  = "#ff7f00"   # orange
   ))
 # Display the plot
 print(p3_faceted)
@@ -126,8 +130,8 @@ print(p3_faceted)
 ggsave(
   filename = "../../Summaries and Outputs/2/26_RR_vs_Viability_Faceted.png",
   plot = p3_faceted,
-  width = 16,
-  height = 8,
+  width = 14,
+  height = 7,
   dpi = 300
 )
 

@@ -124,14 +124,100 @@ plot_trait <- function(trait_name, y_label) {
       "2.0x"  = "#4a1486"
     ))
 }
+#reaction norm 
+plot_trait <- function(trait_name, y_label) {
+  ggplot(
+    life_history_all,
+    aes(
+      x = Treatment,
+      y = .data[[trait_name]],
+      color = Treatment,
+      group = 1
+    )
+  ) +
+    stat_summary(fun = mean, geom = "line", linewidth = 3) +
+    stat_summary(fun = mean, geom = "point", size = 6) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.55) +
+    #facet_wrap(~ Dataset) +
+    theme_classic(base_size = 24) +
+    theme(
+      legend.text = element_text(size = 24),    # legend item labels
+      legend.title = element_text(size = 20))+    # legend title)
+    labs(
+      title = trait_name,
+      y = y_label,
+      x = "Treatment"
+    ) +
+    scale_color_manual(values = c(
+      "0.5x"  = "#dadaeb",
+      "0.75x" = "#bcbddc",
+      "1.0x"  = "#9e9ac8",
+      "1.25x" = "#807dba",
+      "1.5x"  = "#6a51a3",
+      "2.0x"  = "#4a1486"
+    ))
+}
 
+#reaaction norm 2
+
+# Define which terms are significant (TRUE = bold)
+sig_B   <- FALSE
+sig_G   <- FALSE
+sig_E   <- TRUE
+sig_GxE <- FALSE
+
+# Helper: wrap term in bold() if significant
+fmt_term <- function(term, significant) {if (significant) paste0("bold(", term, ")") else term}
+
+# Build the label as a string expression
+eq_label <- paste0( "Viability * '~' * ", fmt_term("B", sig_B), " + ", fmt_term("E", sig_E), " + ", fmt_term("BxE", sig_GxE))
+
+plot_trait <- function(trait_name, y_label) {
+  ggplot(
+    life_history_all,
+    aes(
+      x = Treatment,
+      y = .data[[trait_name]],
+      color = Dataset,
+      group = Dataset
+    )
+  ) +
+    stat_summary(fun = mean, geom = "line", linewidth = 3) +
+    stat_summary(fun = mean, geom = "point", size = 6) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.55) +
+    #facet_wrap(~ Dataset) +
+    # Add equation 
+    annotate(
+      "text",
+      x = 3.5,          # adjust if needed
+      y = 98.5,
+      label = eq_label,
+      parse = TRUE,
+      size = 16
+    ) +
+    theme_classic(base_size = 24) +
+    theme(
+      legend.text = element_text(size = 24),
+      legend.title = element_text(size = 20)
+    ) +
+    labs(
+      #title = trait_name,
+      y = y_label,
+      x = "Treatment",
+      color = "Dataset"
+    ) +
+    scale_color_manual(values = c(
+      "Marker-free" = "#9e9ac8",  # light purple
+      "Marker-present" = "#4a1486"   # dark purple
+    ))
+}
 # -----------------------------
 # GENERATE PLOTS
 # -----------------------------
 p_fecundity <- plot_trait("Fecundity", "Eggs per mother")
 p_fertility <- plot_trait("Fertility", "Viable offspring per mother")
 p_viability <- plot_trait("Viability", "Viability (%)")
-
+p_viability
 ggsave(
   "../../Summaries and Outputs/1/20_trait_fecundity.png",
   plot = p_fecundity,
@@ -151,8 +237,8 @@ ggsave(
 ggsave(
   "../../Summaries and Outputs/1/22_trait_viability.png",
   plot = p_viability,
-  width = 12,
-  height = 6,
+  width = 13,
+  height = 7,
   dpi = 300
 )
 

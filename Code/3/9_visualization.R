@@ -47,7 +47,7 @@ write.csv(df, "df.csv", row.names = FALSE)
 ###delete the outlier (just checking)
 #statisticaly
 df <- df %>%
-  group_by(Diet, GB) %>%
+  #group_by(Diet, GB) %>%
   filter(
     recombination_fractions >= quantile(recombination_fractions, 0.25, na.rm = TRUE) -
       1.5 * IQR(recombination_fractions, na.rm = TRUE),
@@ -191,10 +191,91 @@ p2=ggplot(df, aes(x = Diet, y = recombination_fractions, fill = as.factor(GB))) 
     "42"  = "#fb8072"
   ))
 p2
+#reaction norm 
+# Define which terms are significant (TRUE = bold)
+sig_B   <- FALSE
+sig_G   <- TRUE
+sig_E   <- FALSE
+sig_GxE <- TRUE
+
+# Helper: wrap term in bold() if significant
+fmt_term <- function(term, significant) {if (significant) paste0("bold(", term, ")") else term}
+
+# Build the label as a string expression
+eq_label <- paste0( "RR * '~' * ", fmt_term("B", sig_B), " + ", fmt_term("G", sig_G), " + ", fmt_term("E", sig_E), " + ", fmt_term("GxE", sig_GxE))
+
+# Define the standard error function
+se <- function(x) {
+  # Calculate standard deviation (sd) and sample size (length)
+  std_dev <- sd(x)
+  sample_size <- length(x)
+  # Return standard error: sd / sqrt(n)
+  standard_error <- std_dev / sqrt(sample_size)
+  return(standard_error)
+}
+
+# Summarise recombination data to group level
+recomb_summary <- df %>%
+  rename(
+    RR = recombination_fractions,
+    Genotype = GB,
+    Treatment = Diet,
+    #   Brood = Brood
+  ) %>%
+  mutate(across(c(Treatment, Genotype), factor)) %>%
+  group_by(Treatment, Genotype) %>%
+  summarise(
+    mean_RR = median(RR, na.rm = TRUE), 
+    sd_RR = sd(RR,na.rm=TRUE),
+    # se_RR = stderr(RR,na.rm=TRUE),
+    se_RR = se(RR),
+    
+    .groups = "drop")
+
+p2b <- ggplot(recomb_summary,aes( x =as.factor(Treatment),
+                                  y = mean_RR,
+                                  group = as.factor(Genotype),
+                                  color = as.factor(Genotype)))+geom_point(size = 6)+ geom_line(linewidth = 3)+
+  geom_errorbar(aes(ymin = mean_RR - se_RR, ymax = mean_RR + se_RR), width = 0.55) +
+#  ylim(65,110)+
+# Add equation 
+annotate(
+  "text",
+  x = 2,          # adjust if needed
+  y = 99.5,
+  label = eq_label,
+  parse = TRUE,
+  size = 16
+) +
+  
+  labs(
+    # title = "RR G X E",
+    x = "Treatments",
+    y = "RR",
+    color = "Genotype"
+  ) +
+  theme_minimal(base_size = 25) +
+  theme(
+    legend.position = "right",
+    strip.background = element_rect(fill = "#f0f0f0"),
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(size = 35, face = "bold", hjust = 0.5)
+  ) +
+  scale_color_manual(values = c(
+    "217" = "#e41a1c",
+    "391" = "#377eb8",
+    "491" = "#4daf4a",
+    "399" = "#984ea3",
+    "42"  = "#ff7f00"
+  ))
+
+
+p2b
+
 ggsave(
   filename = "../../Summaries and Outputs/3/18_RR_GxE.png",
-  plot = p2,
-  width = 12,
+  plot = p2b,
+  width = 13,
   height = 6,
   dpi = 300
 )

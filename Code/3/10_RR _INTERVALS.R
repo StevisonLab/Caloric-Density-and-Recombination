@@ -13,7 +13,10 @@ df <- read.csv("df.csv")
 df <- df %>% mutate(across(starts_with("MLE_"), as.numeric))
 
 # --- Define markers and intervals ---
-markers <- c("y","sc","cv","v","f","car")
+#markers <- c("sc","cv","v","f","car","y+")
+markers <- c("y+","car","f","v","cv","sc")
+
+
 intervals <- list()
 for(i in 1:(length(markers)-1)){
   intervals[[i]] <- list(
@@ -99,3 +102,75 @@ table4 <- lapply(intervals, function(intv){
   pivot_wider(names_from = interval, values_from = p.value)
 
 write.csv(table4, "Table4_ANOVA_pvalues.csv", row.names=FALSE)
+#people effect:
+
+library(lme4)
+library(emmeans)
+library(multcompView)
+library(dplyr)
+
+# Make sure your interval columns are numeric
+df <- df %>% mutate(across(starts_with("MLE_x"), as.numeric))
+
+# Define intervals (sum the markers for each interval)
+intervals <- list(
+  "sc-cv" = c("MLE_x1","MLE_x2"),
+  "cv-v"  = c("MLE_x2","MLE_x3"),
+  "v-f"   = c("MLE_x3","MLE_x4"),
+  "f-car" = c("MLE_x4","MLE_x5"),
+  "car-y+"= c("MLE_x5")  # or include any extra if needed
+)
+
+cld_people_list <- lapply(names(intervals), function(intv_name){
+  
+  # Sum columns for this interval
+  df$interval_sum <- rowSums(select(df, all_of(intervals[[intv_name]])), na.rm = TRUE)
+  
+  # Fit model with People as main effect (you can include other factors if desired)
+  model <- aov(interval_sum ~ People, data = df)
+  
+  # Estimated marginal means
+  emm <- emmeans(model, ~ People)
+  
+  # Compact Letter Display (significance grouping)
+  cld_df <- cld(emm, Letters = letters)
+  
+  cld_df %>%
+    select(People, .group) %>%
+    mutate(interval = intv_name)
+  
+}) %>% bind_rows()
+
+# View the CLD for People
+cld_people_list
+
+#plot
+library(ggplot2)
+library(dplyr)
+
+# Prepare mean recombination per People for each interval
+interval_means <- lapply(names(intervals), function(intv_name){
+  df$interval_sum <- rowSums(select(df, all_of(intervals[[intv_name]])), na.rm = TRUE)
+  
+  df %>%
+    group_by(People) %>%
+    summarise(mean = mean(interval_sum), sd = sd(interval_sum), .groups = "drop") %>%
+    mutate(interval = intv_name)
+}) %>% bind_rows()
+
+# Join with CLD letters
+plot_df <- interval_means %>%
+  left_join(cld_people_list, by = c("People", "interval"))
+
+# Plot with fixed y-axis
+ggplot(plot_df, aes(x = People, y = mean, fill = People)) +
+  geom_bar(stat = "identity", position = position_dodge(), width = 0.6) +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd),
+                width = 0.2, position = position_dodge(0.6)) +
+  geom_text(aes(label = .group, y = mean + sd + 0.02), size = 5) +
+  facet_wrap(~interval, scales = "fixed") +  # fixed y-axis for all intervals
+  labs(title = "Recombination Rate by People with CLD",
+       y = "Recombination rate (sum of markers)",
+       x = "People") +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none")

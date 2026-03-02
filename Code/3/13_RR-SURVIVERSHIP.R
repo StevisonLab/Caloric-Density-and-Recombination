@@ -112,15 +112,22 @@ p5=ggplot(slopes_df, aes(x = Brood, y = slope, color = Genotype,
                       linetype = Dataset)) +
   geom_hline(yintercept = 0, color = "black", size = 1) +
   geom_errorbar(aes(ymin = slope - se, ymax = slope + se), 
-                width = 0.3, size = 0.8, position = pd) +
-  geom_line(size = 1.2, position = pd) +
-  geom_point(aes(shape = Dataset), size = 4, position = pd) +
+                width = 0.55, size = 0.8, position = pd) +
+  geom_line(size = 3.2, position = pd) +
+  geom_point(aes(shape = Dataset), size = 6, position = pd) +
   geom_text(data = filter(slopes_df, significant), 
             aes(label = "*"), vjust = -1.2, size = 10, 
             color = "black", show.legend = FALSE, position = pd) + 
   facet_wrap(~ Treatment, nrow = 1) +
-  scale_color_manual(values = c("42" = "#fb6a4a", "399" = "#9e9ac8")) +
-  labs(
+ # scale_color_manual(values = c("42" = "#ff7f00", "399" = "#984ea3")) +
+  #scale_color_manual(values = c( "399" = "#4a1486","42"  = "#99000d")) +
+  scale_color_manual(values = c(
+    "217" = "#e41a1c",  # red
+    "391" = "#377eb8",  # blue
+    "491" = "#4daf4a",  # green
+    "399" = "#984ea3",  # purple
+    "42"  = "#ff7f00" ))+  # orange
+   labs(
     title = "Recombination Rate vs Viability",
     subtitle = "Asterisks indicate significant",
     x = "Brood ",
@@ -129,7 +136,7 @@ p5=ggplot(slopes_df, aes(x = Brood, y = slope, color = Genotype,
     shape = "Marker Type",
     linetype = "Marker Type"
   ) +
-  theme_minimal(base_size = 20) +
+  theme_minimal(base_size = 24) +
   theme(
     plot.title = element_text(size = 28, face = "bold", hjust = 0.5),
     strip.background = element_rect(fill = "#f0f0f0"),
@@ -140,63 +147,85 @@ p5
 ggsave(
   "../../Summaries and Outputs/3/26_RR_SURVIVAL.png",
   plot = p5,
-  width = 8,
-  height = 6,
+  width = 16,
+  height = 8,
   dpi = 300
 )
 
 # Save the final merged and cleaned data for future use
 write.csv(combined_vial_data, "../../Summaries and Outputs/3/27_RR_and_Life_History_Merged.csv", row.names = FALSE)
-####
-scale_alpha_manual(values = c("TRUE"=1,"FALSE"=0.3), name ="p < 0.05")+
-  ggplot(slopes_df, aes(x = Brood, y = slope, color = GB, group = GB)) +
-  
-  geom_errorbar(aes(ymin = slope - se, ymax = slope + se, alpha = significant), 
-                
-                width = 0.2, size = 0.8) +
-  
-  geom_point(aes(alpha = significant), size = 3) +
-  
-  geom_line(aes(alpha = significant), size = 1.2) +
-  
-  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 1) +
-  
-  facet_wrap(~ Diet, nrow = 1) +
-  
-  scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = 0.3), name = "p < 0.05") +  # Dim non-significant
-  
+
+
+# Summarise recombination data to group level
+recomb_summary <- df %>%
+  rename(
+    RR = recombination_fractions,
+    Genotype = GB,
+    Treatment = Diet,
+    Brood = Brood
+  ) %>%
+  mutate(across(c(Treatment, Genotype,Brood), factor)) %>%
+  group_by(Treatment, Genotype,Brood) %>%
+  summarise(
+    mean_RR = median(RR, na.rm = TRUE), 
+    .groups = "drop")
+
+# Summarise life history data to group level
+life_history_summary <- life_history_all %>%
+  group_by(Brood, Treatment, Genotype) %>%
+  summarise(
+    mean_Viability = median(Viability, na.rm = TRUE),
+    mean_Fecundity  = median(Fecundity, na.rm = TRUE),
+    mean_Fertility  = median(Fertility, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Join on shared keys
+combined_group_data <- inner_join(recomb_summary, life_history_summary,
+                                  by = c("Brood", "Treatment", "Genotype"))
+
+# ============================================================
+# STEP 4: PLOT RR vs Viability BY TREATMENT & GENOTYPE
+# ============================================================
+
+p3_faceted <- ggplot(combined_group_data,
+                     aes(x = mean_Viability, y = mean_RR, color = Genotype)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 3) +
+  facet_wrap(~ Treatment) +
   labs(
-    
-    title = "RR vs Survival by GxExAge",
-    
-    x = "Age",
-    
-    y = "Slope",
-    
+    # title = "Recombination Rate vs Viability by Treatment & Genotype",
+    x = "Median Viability (%)",
+    y = "Median Recombination Rate",
     color = "Genotype"
-    
   ) +
-  
   theme_minimal(base_size = 25) +
-  
   theme(
-    
-    plot.title = element_text(size = 35, face = "bold", hjust = 0.5),
-    
-    axis.title = element_text(size = 28),
-    
-    axis.text = element_text(size = 14),
-    
+    legend.position = "right",
     strip.background = element_rect(fill = "#f0f0f0"),
-    
-    strip.text = element_text(face = "bold")
-    
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    axis.text = element_text(size = 18),
+    axis.title = element_text(size = 22),
+    legend.text = element_text(size = 20),
+    legend.title = element_text(size = 20)
   ) +
-  
   scale_color_manual(values = c(
-    
-    "42"  = "#fb6a4a",
-    
-    "399" = "#9e9ac8"
-    
+    "217" = "#e41a1c",  # red
+    "391" = "#377eb8",  # blue
+    "491" = "#4daf4a",  # green
+    "399" = "#984ea3",  # purple
+    "42"  = "#ff7f00"   # orange
   ))
+
+# Display the plot
+print(p3_faceted)
+ggsave(
+  filename = "../../Summaries and Outputs/3/26_RR_vs_Viability_Faceted.png",
+  plot = p3_faceted,
+  width = 14,
+  height = 7,
+  dpi = 300
+)
+
+

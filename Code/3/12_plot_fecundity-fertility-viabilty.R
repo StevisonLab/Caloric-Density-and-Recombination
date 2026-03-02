@@ -55,7 +55,7 @@ marker_free_life_history <- marker_free_viability_dataset %>%
 # ============================================================
 # MARKER-PRESENT DATA
 # ============================================================
-marker_present_life_history <- multiply_marked_viability_dataset %>%
+  marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
     Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
@@ -113,8 +113,42 @@ plot_trait <- function(trait_name, y_label) {
       x = "Treatment"
     ) +
     scale_fill_manual(values = c(
-      "42"  = "#fb6a4a",
-      "399" = "#9e9ac8"
+   #   "42"  = "#ff7f00",
+  #    "399" = "#984ea3"
+      "399" = "#4a1486",  # purple
+      "42"  = "#99000d"   # orange
+    ))
+}
+#reaction norm
+plot_trait <- function(trait_name, y_label) {
+  ggplot(life_history_all,
+         aes(
+           x = Treatment,
+           y = .data[[trait_name]],
+           group = Genotype,
+           color = Genotype
+         )) +
+    stat_summary(fun = mean, geom = "line", linewidth = 3) +
+    stat_summary(fun = mean, geom = "point", size = 6) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.55) +
+    ylim(0,100)+
+    facet_wrap(~ Dataset) +
+    theme_classic(base_size = 24) +
+    theme(
+      legend.text = element_text(size = 20),
+      legend.title = element_text(size = 20)
+    ) +
+    labs(
+      title = trait_name,
+      y = y_label,
+      x = "Treatment"
+    ) +
+    scale_color_manual(values = c(
+      "217" = "#e41a1c",  # red
+      "391" = "#377eb8",  # blue
+      "491" = "#4daf4a",  # green
+      "399" = "#984ea3",  # purple
+      "42"  = "#ff7f00"   # orange
     ))
 }
 
