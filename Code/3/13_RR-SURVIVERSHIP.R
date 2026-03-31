@@ -130,7 +130,7 @@ p5=ggplot(slopes_df, aes(x = Brood, y = slope, color = Genotype,
    labs(
     title = "Recombination Rate vs Viability",
     subtitle = "Asterisks indicate significant",
-    x = "Brood ",
+    x = "Time ",
     y = "Standardized Slope (β)",
     color = "Genotype",
     shape = "Marker Type",
