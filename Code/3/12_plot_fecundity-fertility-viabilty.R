@@ -40,6 +40,7 @@ marker_free_life_history <- marker_free_viability_dataset %>%
     Treatment = treatment,
     Genotype  = genotype,
     Brood     = brood_id,
+    vialID      = cross_id,   # ✅ ADD THIS LINE
     Dataset,
     Fecundity,
     Fertility,
@@ -67,6 +68,7 @@ marker_free_life_history <- marker_free_viability_dataset %>%
     Treatment = treatment,
     Genotype  = genotype,
     Brood     = brood_id,
+    vialID      = cross_id,   
     Dataset,
     Fecundity,
     Fertility,

@@ -21,6 +21,15 @@ df <- df %>% extract(original_ID,
   ) %>%
   rename(recombination_fractions = MLE_X_length)
 
+#_______
+df <- read.csv("14_recombination_frequency_per_vial.csv")
+
+df <- df %>% extract(ID,
+                     into = c("experiment", "vialID", "Brood"),
+                     regex = "^(.*)_([0-9]+)_([A-Za-z])$"
+) %>%
+  rename(recombination_fractions = Total_RF)
+
 # 2. Read and prepare treatment key for the first 2 
 treatment_key <- read.csv("Treatmentskeys.csv")
 treatment_key <- treatment_key %>%
@@ -43,6 +52,7 @@ df$GB <- as.factor(df$GB)
 df$People <- as.factor(df$People)
 df$recombination_fractions <- as.numeric(df$recombination_fractions)
 write.csv(df, "df.csv", row.names = FALSE)
+write.csv(df, "df_RecombinationFrequency.csv", row.names = FALSE)
 
 ###delete the outlier (just checking)
 #statisticaly
@@ -60,6 +70,7 @@ df <- df %>%
 #Biological
 boxplot(recombination_fractions ~ Diet * GB, data = df)
 df <- df %>%filter(recombination_fractions < 1000)  
+write.csv(df, "df_cleaned.csv", row.names = FALSE)
 
 # 3. ANOVA
 anova_result <- aov(recombination_fractions ~ Brood + GB + Diet + People, data = df)
