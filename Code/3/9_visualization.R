@@ -24,10 +24,7 @@ df <- df %>% extract(original_ID,
 #_______
 df <- read.csv("14_recombination_frequency_per_vial.csv")
 
-df <- df %>% extract(ID,
-                     into = c("experiment", "vialID", "Brood"),
-                     regex = "^(.*)_([0-9]+)_([A-Za-z])$"
-) %>%
+df <- df %>% 
   rename(recombination_fractions = Total_RF)
 
 # 2. Read and prepare treatment key for the first 2 
@@ -86,6 +83,7 @@ anova_summary <- tidy(anova_result) %>%
       TRUE ~ ""
     ))
 write.csv(anova_summary, "../../Summaries and Outputs/3/15_anova_model_recombination.csv", row.names = FALSE)
+write.csv(anova_summary, "../../Summaries and Outputs/3/15_anova_model_recombinationfrequency.csv", row.names = FALSE)
 
 # 4. Post hoc Tukey
 TukeyHSD(anova_result)

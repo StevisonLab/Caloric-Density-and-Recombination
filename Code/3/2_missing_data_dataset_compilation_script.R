@@ -3,7 +3,10 @@ library(dplyr)
 library(dbplyr)
 library(emmeans)
 library(multcomp) 
-library(multcompView)  # for cld() support if needed
+library(multcompView)  # for cld() support if needed'
+
+setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/3")
+
 
 #Marker free----
 # Read in csv files of raw count data from the marker free cross
@@ -25,7 +28,9 @@ write.csv(compiled_raw_marker_free_dataset, "../../Summaries and Outputs/3/D_com
 
 # Transform individual raw egg counts to address undercounting the average and round these two counts to the nearest whole number
 CH_transformed_marker_free_total_egg_count <- (CH_raw_marker_free_total_egg_count - 6.479979) / 0.9224861
-LM_transformed_marker_free_total_egg_count <- (LM_raw_marker_free_total_egg_count - 4.866269) / 0.8351445      
+#LM_transformed_marker_free_total_egg_count <- (LM_raw_marker_free_total_egg_count - 4.866269) / 0.8351445 
+LM_transformed_marker_free_total_egg_count <- (LM_raw_marker_free_total_egg_count - 5.346608 ) / 0.9101858        
+
 transformed_mean_marker_free_total_egg_count <- round((CH_transformed_marker_free_total_egg_count + LM_transformed_marker_free_total_egg_count) / 2)
 
 derived_marker_free_dataset <- cbind(compiled_raw_marker_free_dataset, transformed_mean_marker_free_total_egg_count)
@@ -37,31 +42,13 @@ derived_marker_free_male_viability <- derived_marker_free_dataset$male_adult_cou
 derived_marker_free_total_viability <- derived_marker_free_dataset$total_adult_count / derived_marker_free_dataset$transformed_mean_marker_free_total_egg_count
 marker_free_viability_dataset <- cbind(derived_marker_free_dataset, derived_marker_free_female_viability, derived_marker_free_male_viability, derived_marker_free_total_viability)
 write.csv(marker_free_viability_dataset, "../../Summaries and Outputs/3/F_marker_free_viability_dataset.csv", row.names = TRUE)
-####not sure i didnot do it !!!!
-marker_free_viability_dataset <- marker_free_viability_dataset %>%
+####not sure|||| i didnot do it !!!!
+#marker_free_viability_dataset <- marker_free_viability_dataset %>%
   filter(
     derived_marker_free_total_viability >= quantile(derived_marker_free_total_viability, 0.25, na.rm = TRUE) -
       1.5 * IQR(derived_marker_free_total_viability, na.rm = TRUE),
     derived_marker_free_total_viability <= quantile(derived_marker_free_total_viability, 0.75, na.rm = TRUE) +
       1.5 * IQR(derived_marker_free_total_viability, na.rm = TRUE)
-  ) %>%
-  ungroup()
-
-marker_free_viability_dataset <- marker_free_viability_dataset %>%
-  filter(
-    derived_marker_free_male_viability >= quantile(derived_marker_free_male_viability, 0.25, na.rm = TRUE) -
-      1.5 * IQR(derived_marker_free_male_viability, na.rm = TRUE),
-    derived_marker_free_male_viability <= quantile(derived_marker_free_male_viability, 0.75, na.rm = TRUE) +
-      1.5 * IQR(derived_marker_free_male_viability, na.rm = TRUE)
-  ) %>%
-  ungroup()
-
-marker_free_viability_dataset <- marker_free_viability_dataset %>%
-  filter(
-    derived_marker_free_female_viability >= quantile(derived_marker_free_female_viability, 0.25, na.rm = TRUE) -
-      1.5 * IQR(derived_marker_free_female_viability, na.rm = TRUE),
-    derived_marker_free_female_viability <= quantile(derived_marker_free_female_viability, 0.75, na.rm = TRUE) +
-      1.5 * IQR(derived_marker_free_female_viability, na.rm = TRUE)
   ) %>%
   ungroup()
 
@@ -133,7 +120,8 @@ write.csv(compiled_raw_multiply_marked_dataset, "../../Summaries and Outputs/3/4
 
 # Transform individual raw egg counts to address undercounting
 CH_transformed_multiply_marked_total_egg_count <- (CH_raw_multiply_marked_total_egg_count - 6.479979) / 0.9224861    
-LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 4.866269) / 0.8351445
+#LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 4.866269) / 0.8351445
+LM_transformed_multiply_marked_total_egg_count <- (LM_raw_multiply_marked_total_egg_count - 5.346608 ) / 0.9101858        
 transformed_mean_multiply_marked_total_egg_count <- round((CH_transformed_multiply_marked_total_egg_count + LM_transformed_multiply_marked_total_egg_count) / 2)
 derived_multiply_marked_dataset <- cbind(compiled_raw_multiply_marked_dataset, transformed_mean_multiply_marked_total_egg_count)
 derived_multiply_marked_dataset <-derived_multiply_marked_dataset %>% filter(!is.na(total_adult_count))
