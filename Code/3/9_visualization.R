@@ -22,7 +22,7 @@ df <- df %>% extract(original_ID,
   rename(recombination_fractions = MLE_X_length)
 
 #_______
-df <- read.csv("14_recombination_frequency_per_vial.csv")
+#df <- read.csv("14_recombination_frequency_per_vial.csv")
 
 df <- df %>% 
   rename(recombination_fractions = Total_RF)
@@ -66,7 +66,7 @@ df <- df %>%
 ###delete the outlines
 #Biological
 boxplot(recombination_fractions ~ Diet * GB, data = df)
-df <- df %>%filter(recombination_fractions < 1000)  
+#df <- df %>%filter(recombination_fractions < 1000)  
 write.csv(df, "df_cleaned.csv", row.names = FALSE)
 
 # 3. ANOVA

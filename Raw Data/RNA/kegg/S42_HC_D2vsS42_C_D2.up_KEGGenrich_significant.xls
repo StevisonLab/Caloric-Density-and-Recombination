@@ -1,0 +1,3 @@
+KEGGID	Description	GeneRatio	BgRatio	pvalue	padj	geneID	geneName	keggID	Count
+dme04624	Toll and Imd signaling pathway	2/4	83/3239	0.00376493265656062	0.0112947979696819	FBgn0034647/FBgn0033327	pirk/PGRP-SC1b	dme:Dmel_CG15678/dme:Dmel_CG14746	2
+dme00350	Tyrosine metabolism	1/4	20/3239	0.024482392266602	0.036723588399903	FBgn0000075	amd	dme:Dmel_CG10501	1

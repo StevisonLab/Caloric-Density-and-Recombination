@@ -1,0 +1,2 @@
+Category	GOID	Description	GeneRatio	BgRatio	pvalue	padj	geneID	geneName	Count
+MF	GO:0005549	odorant binding	4/26	49/5194	8.97465980478542e-05	0.00394885031410558	FBgn0039678/FBgn0034470/FBgn0034468/FBgn0043535	Obp99a/Obp56d/Obp56a/Obp57a	4

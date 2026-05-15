@@ -1,0 +1,2 @@
+KEGGID	Description	GeneRatio	BgRatio	pvalue	padj	geneID	geneName	keggID	Count
+dme00910	Nitrogen metabolism	1/2	15/3285	0.00911295390964362	0.0182259078192872	FBgn0040629	CG18673	dme:Dmel_CG18673	1
