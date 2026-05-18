@@ -1,0 +1,7 @@
+"gene_id","gene_label","Comparison","log2FoldChange","padj","Direction"
+"FBgn0038756","CG4783","High Calorie vs Control",-1.21524801607585,0.00827703230415984,"Down"
+"FBgn0038756","CG4783","Low Calorie vs Control",1.61772552311733,9.77952820582977e-05,"Up"
+"FBgn0038756","CG4783","Low Calorie vs High Calorie",2.8404798736024,2.30484671802819e-24,"Up"
+"FBgn0039873","Smvt","High Calorie vs Control",-1.01623799444855,0.022168118408061,"Down"
+"FBgn0039873","Smvt","Low Calorie vs Control",1.0710954050616,0.0313352016888156,"Up"
+"FBgn0039873","Smvt","Low Calorie vs High Calorie",2.0917484254368,1.16490248872104e-15,"Up"
