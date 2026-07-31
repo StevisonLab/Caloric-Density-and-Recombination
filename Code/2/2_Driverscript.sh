@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
 #SBATCH --time=24:00:00
-#SBATCH --array=1-659
+#SBATCH --array=1-207
 
 # ==================== CONFIGURATION ====================
 # Code directory:
@@ -42,8 +42,8 @@ fi
 echo "Running Array Task: $SLURM_ARRAY_TASK_ID"
 Rscript Melika_driver.R
 
-# 3. Run combine script ONLY on last array task (Task 659)
-if [ "$SLURM_ARRAY_TASK_ID" -eq 659 ]; then
+# 3. Run combine script ONLY on last array task (Task 207)
+if [ "$SLURM_ARRAY_TASK_ID" -eq 207 ]; then
     echo "Running Final Output Combination..."
     Rscript Melika_combine.R
 fi
