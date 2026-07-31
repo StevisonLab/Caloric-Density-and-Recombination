@@ -1,0 +1,5 @@
+"Df","Sum Sq","Mean Sq","F value","Pr(>F)","Term","Dataset","Trait"
+2,56.62722943723,28.313614718615,0.222086540200555,0.801548007052734,"Treatment      ","Marker-free","Fecundity"
+6,567.399480519481,94.5665800865802,0.741762039172603,0.618322339771049,"Brood          ","Marker-free","Fecundity"
+12,1789.19004329004,149.09917027417,1.16950517276035,0.327032450579841,"Treatment:Brood","Marker-free","Fecundity"
+56,7139.39,127.489107142857,NA,NA,"Residuals      ","Marker-free","Fecundity"

@@ -1,0 +1,5 @@
+"Df","Sum Sq","Mean Sq","F value","Pr(>F)","Term","Dataset","Trait"
+5,840.370624999999,168.074125,6.36388290697398,0.00017544937485399,"Treatment      ","Marker-present","Fertility"
+6,528.529940476191,88.0883234126986,3.33533657051655,0.00889472912370304,"Brood          ","Marker-present","Fertility"
+30,451.455416666667,15.0485138888889,0.569790146537194,0.945007240828292,"Treatment:Brood","Marker-present","Fertility"
+42,1109.24625,26.410625,NA,NA,"Residuals      ","Marker-present","Fertility"

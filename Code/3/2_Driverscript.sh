@@ -6,14 +6,14 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
 #SBATCH --time=24:00:00
-#SBATCH --array=1-659
+#SBATCH --array=1-207
 
 # ==================== CONFIGURATION ====================
 # Code directory:
-export WORK_DIR="$HOME/Caloric-Density-and-Recombination/Code/3"
+export WORK_DIR="$HOME/Caloric-Density-and-Recombination/Code/2"
 
 # Data input & output directory:
-export DATA_DIR="$HOME/Caloric-Density-and-Recombination/Summaries and Outputs/3"
+export DATA_DIR="$HOME/Caloric-Density-and-Recombination/Summaries and Outputs/2"
 
 # Dataset and output filenames:
 export INPUT_FILE="13_multi_locus_individual_vials_dataset.csv" # Change as needed
