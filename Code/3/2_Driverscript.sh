@@ -9,37 +9,41 @@
 #SBATCH --array=1-659
 
 # ==================== SINGLE POINT OF CONFIGURATION ====================
-export WORK_DIR="$HOME/GitHub/Caloric-Density-and-Recombination/Summaries and Outputs/3"
-export INPUT_FILE="13_multi_locus_individual_vials_dataset.csv" # Change to 14_... when needed
+# Set working directory matching your pwd output
+export WORK_DIR="$HOME/Caloric-Density-and-Recombination/Code/3"
+
+# Change input file here (e.g. 13_... or 14_...)
+export INPUT_FILE="13_multi_locus_individual_vials_dataset.csv" 
 export FINAL_OUTPUT_NAME="Nutrition_countingmodel_outputs_all.csv"
 # =======================================================================
 
-# Change directory
-cd "$WORK_DIR"
+# Move into working directory
+cd "$WORK_DIR" || exit 1
 mkdir -p logs Outputs
 
-# Set up temporary directory
+# Temporary directory setup
 export TMPDIR="$HOME/tmp/${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 mkdir -p "$TMPDIR"
 
-# Load R module
+# Load modules
+module load gcc/9.3.0
 module load R/4.4.1
 
-# 1. Run key generation ONLY on the first array task (Task 1)
+# 1. Generate key on array task 1
 if [ "$SLURM_ARRAY_TASK_ID" -eq 1 ]; then
     echo "Running Key Generation for $INPUT_FILE..."
     Rscript melika_key.r
 fi
 
-# 2. Run the driver script for the current array task
+# 2. Run array task
 echo "Running Array Task: $SLURM_ARRAY_TASK_ID"
 Rscript melika_driver.r
 
-# 3. Run combine script ONLY on the last array task (Task 659)
+# 3. Combine output on last array task
 if [ "$SLURM_ARRAY_TASK_ID" -eq 659 ]; then
     echo "Running Final Output Combination into $FINAL_OUTPUT_NAME..."
     Rscript melika_combine.r
 fi
 
-# Clean up temporary directory
+# Clean up
 rm -rf "$TMPDIR"
