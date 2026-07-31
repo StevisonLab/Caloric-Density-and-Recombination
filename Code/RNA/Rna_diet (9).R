@@ -1,4 +1,3 @@
-
 # RNA-seq ANALYSIS — CALORIC DENSITY & RECOMBINATION PROJECT
 # Two Genotypes: S42 and S399 | Diet: High Calorie (HC), Low Calorie (LC), Control (C)
 # Days: 2 and 6
@@ -110,7 +109,7 @@ cat("S42 vs S399:             ", nrow(S42_vs_S399_sig), " significant DEGs\n")
 cat("Total unique genes (diet comparisons):", length(unique(all_genes_overall$gene_id)), "\n\n")
 
 
-# UPSET PLOT — OVERALL DIET COMPARISONS
+# UPSET PLOT — OVERALL DIET COMPARISONS--------
 
 # --- Update your UpSet Plot lists to include LC vs HC ---
 deg_list_overall <- list(
@@ -373,14 +372,232 @@ make_upset(
 
 cat("✓ Saved: upset_S399_Day6.png\n")
 
-# PART 5 — VOLCANO PLOTS-------------------
+# PART 4B — UPSET PLOTS PER GENOTYPE, COMBINING DAY 2 & DAY 6
+# Each of the 3 comparisons appears twice (D2 + D6), colored by day
+# ------------------------------------------------------------------
 
+make_upset_byday <- function(list_of_gene_sets, set_order, day_colors, outfile) {
+
+  list_of_gene_sets <- lapply(list_of_gene_sets, function(x) {
+    x <- as.character(x)
+    x <- x[!is.na(x)]
+    unique(x)
+  })
+
+  cat("\nUPSET (by day) CHECK:\n")
+  print(sapply(list_of_gene_sets, length))
+
+  upset_input <- fromList(list_of_gene_sets)
+
+  png(outfile, width = 1700, height = 1000, res = 160)
+
+  p <- UpSetR::upset(
+    upset_input,
+    sets = set_order,
+    keep.order = TRUE,
+    order.by = "freq",
+    main.bar.color = "gray38",
+    matrix.color = "black",
+    sets.bar.color = day_colors,   # one color per set, matched to set_order
+    point.size = 6,
+    line.size = 2.5,
+    text.scale = c(2, 2, 2, 1.5, 2, 1.5),
+    mb.ratio = c(0.55, 0.45)
+  )
+
+  print(p)
+  dev.off()
+}
+
+# Shared set order and colors (2 shades per comparison: dark = D2, light = D6)
+byday_set_order <- c(
+  "LC vs HC (D2)",      "LC vs HC (D6)",
+  "LC vs Control (D2)", "LC vs Control (D6)",
+  "HC vs Control (D2)", "HC vs Control (D6)"
+)
+
+byday_colors <- c(
+  "#E41A1C", "#FB9A99",   # LC vs HC        — D2 dark red   / D6 light red
+  "#377EB8", "#A6CEE3",   # LC vs Control   — D2 dark blue  / D6 light blue
+  "#4DAF4A", "#B2DF8A"    # HC vs Control   — D2 dark green / D6 light green
+)
+
+# ---- S42: combine Day2 + Day6 sets ----
+S42_byday_list <- list(
+  "HC vs Control (D2)" = S42_D2_list[["HC vs Control"]],
+  "HC vs Control (D6)" = S42_D6_list[["HC vs Control"]],
+  "LC vs Control (D2)" = S42_D2_list[["LC vs Control"]],
+  "LC vs Control (D6)" = S42_D6_list[["LC vs Control"]],
+  "LC vs HC (D2)"      = S42_D2_list[["LC vs HC"]],
+  "LC vs HC (D6)"      = S42_D6_list[["LC vs HC"]]
+)
+
+make_upset_byday(
+  S42_byday_list,
+  byday_set_order,
+  byday_colors,
+  paste0(out_deg, "upset_S42_byDay_combined.png")
+)
+cat("✓ Saved: upset_S42_byDay_combined.png\n")
+
+# ---- S399: combine Day2 + Day6 sets ----
+S399_byday_list <- list(
+  "HC vs Control (D2)" = S399_D2_list[["HC vs Control"]],
+  "HC vs Control (D6)" = S399_D6_list[["HC vs Control"]],
+  "LC vs Control (D2)" = S399_D2_list[["LC vs Control"]],
+  "LC vs Control (D6)" = S399_D6_list[["LC vs Control"]],
+  "LC vs HC (D2)"      = S399_D2_list[["LC vs HC"]],
+  "LC vs HC (D6)"      = S399_D6_list[["LC vs HC"]]
+)
+
+make_upset_byday(
+  S399_byday_list,
+  byday_set_order,
+  byday_colors,
+  paste0(out_deg, "upset_S399_byDay_combined.png")
+)
+cat("✓ Saved: upset_S399_byDay_combined.png\n")
+
+# PART 4C — UPSET PLOTS PER GENOTYPE: 3 SETS (comparisons), BARS SPLIT BY DAY
+# One row per comparison (HC vs Control / LC vs Control / LC vs HC).
+# Set-size bars AND intersection bars are stacked: Day 2 vs Day 6 (+ "Both",
+# for genes significant on both days in that comparison, so bars stay exact).
+# Requires: ComplexHeatmap
+## orange "#ffbb00", "#ff7f00"
+##purple   "#CCA6D2" "#984ea3  and 
+# ------------------------------------------------------------------------
+
+# install.packages("BiocManager"); BiocManager::install("ComplexHeatmap")  # if needed
+library(ComplexHeatmap)
+library(grid)
+
+# ---- per-gene day category for one comparison ----
+gene_day_category <- function(genes, d2_genes, d6_genes) {
+  in_d2 <- genes %in% d2_genes
+  in_d6 <- genes %in% d6_genes
+  ifelse(in_d2 & in_d6, "Both",
+         ifelse(in_d2, "Day 2",
+                ifelse(in_d6, "Day 6", NA)))
+}
+
+make_stacked_upset <- function(D2_list, D6_list, set_order, outfile, 
+                               width = 12, height = 7) {
+  
+  # 1. Union of sets for UpSet combination matrix
+  union_list <- lapply(set_order, function(s) union(D2_list[[s]], D6_list[[s]]))
+  names(union_list) <- set_order
+  all_genes <- unique(unlist(union_list))
+  
+  m <- sapply(set_order, function(s) all_genes %in% union_list[[s]])
+  rownames(m) <- all_genes
+  colnames(m) <- set_order
+  m01 <- 1 * m
+  comb_mat <- make_comb_mat(m01)
+  
+  # Sort combinations by size (descending)
+  combo_order <- order(-comb_size(comb_mat))
+  
+  # Total combined DEGs per intersection column
+  column_totals <- comb_size(comb_mat)[combo_order]
+  
+  # 2. Build STACKED INTERSECTION matrix (Rows = Intersections, Cols = Day 2 / Day 6)
+  comb_elements <- comb_name(comb_mat)[combo_order]
+  
+  combo_mat_ordered <- t(sapply(comb_elements, function(cc) {
+    # Genes in this specific intersection combination
+    genes_in_comb <- extract_comb(comb_mat, cc)
+    
+    # Count how many belong to Day 2 vs Day 6 lists
+    d2_count <- sum(sapply(D2_list, function(x) genes_in_comb %in% x)) > 0
+    d6_count <- sum(sapply(D6_list, function(x) genes_in_comb %in% x)) > 0
+    
+    c("Day 2" = length(intersect(genes_in_comb, unique(unlist(D2_list)))),
+      "Day 6" = length(intersect(genes_in_comb, unique(unlist(D6_list)))))
+  }))
+  
+  # 3. Build STACKED SET SIZE matrix (Rows = Sets, Cols = Day 2 / Day 6)
+  set_size_mat <- t(sapply(set_order, function(s) {
+    c("Day 2" = length(D2_list[[s]]), 
+      "Day 6" = length(D6_list[[s]]))
+  }))
+  
+  # 4. Top Annotation: Stacked Barplot + DEG Total Count Labels
+  top_ann <- HeatmapAnnotation(
+    "Total DEGs" = anno_text(
+      as.character(column_totals), 
+      rot = 0, 
+      just = "center", 
+      gp = gpar(fontsize = 9, fontface = "bold")
+    ),
+    "Intersection Size" = anno_barplot(
+      combo_mat_ordered, 
+      beside = FALSE, 
+      gp = gpar(fill = c("#CCA6D2", "#984ea3")), 
+      border = FALSE, 
+      bar_width = 0.8, 
+      height = unit(12, "cm")
+    ),
+    annotation_name_side = "left",
+    gap = unit(2, "mm")
+  )
+  
+  # 5. Left Annotation: Set sizes
+  left_ann <- rowAnnotation(
+    "Set Size" = anno_barplot(
+      set_size_mat, 
+      beside = FALSE, 
+      gp = gpar(fill = c("#CCA6D2", "#984ea3")), 
+      border = FALSE, 
+      bar_width = 0.8, 
+      axis_param = list(direction = "reverse"), 
+      width = unit(4, "cm")
+    )
+  )
+  
+  # 6. Build Plot
+  ht <- UpSet(
+    comb_mat, 
+    comb_order = combo_order, 
+    set_order = set_order, 
+    top_annotation = top_ann, 
+    left_annotation = left_ann, 
+    right_annotation = NULL, 
+    row_names_side = "left"
+  )
+  
+  png(outfile, width = width, height = height, units = "in", res = 300, bg = "white")
+  draw(ht)
+  
+  # Custom Legend for Day 2 vs Day 6
+  day_colors <- c("Day 2" = "#CCA6D2", "Day 6" = "#984ea3")
+  lgd <- Legend(labels = names(day_colors), legend_gp = gpar(fill = day_colors), title = "Timepoint")
+  draw(lgd, x = unit(1, "npc") - unit(5, "mm"), y = unit(1, "npc") - unit(20, "mm"), just = c("right", "top"))
+  
+  dev.off()
+  cat("✓ Saved:", basename(outfile), "\n")
+}
+# ---- S42 ----
+make_stacked_upset(
+  D2_list = S42_D2_list, D6_list = S42_D6_list,
+  set_order = c("LC vs HC", "LC vs Control", "HC vs Control"),
+  outfile = paste0(out_deg, "upset_S42_stackedByDay.png")
+)
+
+# ---- S399 ----
+make_stacked_upset(
+  D2_list = S399_D2_list, D6_list = S399_D6_list,
+  set_order = c("LC vs HC", "LC vs Control", "HC vs Control"),
+  outfile = paste0(out_deg, "upset_S399_stackedByDay.png")
+)
+
+
+# PART 5 — VOLCANO PLOTS-------------------
 
 # ---------- Legend colour scheme ----------
 legend_colors <- c(
-  "#d73027",   # HC (right side / up)
-  "#66bd63",   # LC (right side / up)
-  "#dfc27d",   # Control (right side / up)
+  "#b2182b",   # HC (right side / up)
+  "#2166ac",   # LC (right side / up)
+  "#bf812d",   # Control (right side / up)
   "gray70"     # Not significant
 )
 names(legend_colors) <- c(
@@ -409,7 +626,8 @@ all_p <- c(
 )
 
 x_max    <- ceiling(max(abs(all_fc), na.rm = TRUE))
-x_limits <- c(-x_max, x_max)
+#x_limits <- c(-x_max, x_max)
+x_limits <- c(-10, 10)
 y_limits <- c(0, max(all_p, na.rm = TRUE) * 1.1)
 
 # ---------- Volcano function ----------
@@ -436,6 +654,9 @@ create_volcano_plot <- function(deg_data, title, condition_right, condition_left
   
   deg_data <- deg_data %>% 
     filter(!is.na(log2FC), !is.na(neglog10p), !is.infinite(neglog10p))
+  #filter two logfold 2 changes in the plotting
+  deg_data <- deg_data %>%
+    filter(log2FC > -10, log2FC < 10)
   
   # Select top genes
   genes_right <- deg_data %>%
@@ -459,7 +680,7 @@ create_volcano_plot <- function(deg_data, title, condition_right, condition_left
   }
   
   p <- ggplot(deg_data, aes(x = log2FC, y = neglog10p)) +
-    geom_point(aes(color = significance), alpha = 0.6, size = 4.5) +
+    geom_point(aes(color = significance), alpha = 0.7, size = 8)+ #SIZE OF THE DOTS
     scale_color_manual(values = legend_colors, limits = names(legend_colors), drop = FALSE) +
     geom_hline(yintercept = -log10(pval_threshold), linetype = "dashed", color = "gray40") +
     geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold),
@@ -467,8 +688,8 @@ create_volcano_plot <- function(deg_data, title, condition_right, condition_left
     geom_vline(xintercept = 0, linetype = "solid", color = "gray70", linewidth = 0.3) +
     geom_text_repel(
       data = genes_to_label,
-      aes(label = gene_name),      # <-- Only gene_name is used
-      size = 5, box.padding = 0.3, point.padding = 0.2,
+      aes(label = gene_name),      # <-- Only gene_name is used AND SIZE OF THE GENE NAME
+      size = 9, box.padding = 0.3, point.padding = 0.2,
       segment.color = "gray50", segment.size = 0.4,
       min.segment.length = 0.05, force = 1.5, max.overlaps = Inf
     ) +
@@ -477,17 +698,18 @@ create_volcano_plot <- function(deg_data, title, condition_right, condition_left
       x = "Log2 Fold Change",
       y = "-Log10 Adjusted P-value",
       color = "Legend",
-      caption = paste0("|log2FC| > ", log2fc_threshold, " & padj < ", pval_threshold)
+   #   caption = paste0("|log2FC| > ", log2fc_threshold, " & padj < ", pval_threshold)
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 25),
       plot.caption = element_text(hjust = 0.5, size = 9, color = "gray40"),
-      legend.title = element_text(size = 14, face = "bold"),
-      legend.text = element_text(size = 11, face = "bold"),
-      legend.key.size = unit(1.2, "cm"),
-      axis.text = element_text(size = 12),
-      axis.title = element_text(size = 13, face = "bold")
+      legend.title = element_text(size = 20, face = "bold"),
+      legend.text = element_text(size = 16, face = "bold"),
+      legend.position = "left",
+      legend.key.size = unit(2, "cm"),
+      axis.text = element_text(size = 18),
+      axis.title = element_text(size = 18, face = "bold")
     )
   
   if (!is.null(ylim) || !is.null(xlim)) {
@@ -502,15 +724,15 @@ dummy <- ggplot(
              label = factor(names(legend_colors), levels = names(legend_colors))),
   aes(x = x, y = y, color = label)
 ) +
-  geom_point(size = 6) +
+  geom_point(size = 10) +
   scale_color_manual(values = legend_colors, drop = FALSE) +
-  guides(color = guide_legend(title = "Legend", override.aes = list(size = 6))) +
+  guides(color = guide_legend(title = "Legend", override.aes = list(size = 10))) +
   theme_void() +
   theme(
-    legend.position = "right",
-    legend.title    = element_text(size = 16, face = "bold"),
-    legend.text     = element_text(size = 12, face = "bold"),
-    legend.key.size = unit(1.4, "cm")
+    legend.position = "left",
+    legend.title    = element_text(size = 22, face = "bold"),
+    legend.text     = element_text(size = 18, face = "bold"),
+    legend.key.size = unit(2.2, "cm")
   )
 leg <- get_legend(dummy)
 stopifnot(!inherits(leg, "zeroGrob"))
@@ -609,15 +831,33 @@ combined_all <- plot_grid(
   nl(v_S399_HC_D2), nl(v_S399_LC_D2), nl(v_S399_LH_D2),
   nl(v_S399_HC_D6), nl(v_S399_LC_D6), nl(v_S399_LH_D6),
   ncol = 3, nrow = 4, align = "hv",
-  labels = c("S42 Day 2", "", "", "S42 Day 6", "", "",
-             "S399 Day 2", "", "", "S399 Day 6", "", ""),
+#  labels = c("S42 Day 2", "", "", "S42 Day 6", "", "",
+#             "S399 Day 2", "", "", "S399 Day 6", "", ""),
   label_size = 14, label_fontface = "bold"
 )
 final_all <- plot_grid(combined_all, leg, ncol = 2, rel_widths = c(3, 0.8))
 ggsave(paste0(out_deg, "volcano_ALL_genotypes_days.png"),
-       final_all, width = 26, height = 24, dpi = 600)
+       final_all, width = 30, height = 19, dpi = 600)
 cat("✓ Saved: volcano_ALL_genotypes_days.png\n")
 
+
+# ── Save LC vs HC volcano plots individually (no legend) ---------------
+
+ggsave(paste0(out_deg, "volcano_S42_LCvsHC_Day2.png"),
+       nl(v_S42_LH_D2), width = 10, height = 8, dpi = 600)
+cat("✓ Saved: volcano_S42_LCvsHC_Day2.png\n")
+
+ggsave(paste0(out_deg, "volcano_S42_LCvsHC_Day6.png"),
+       nl(v_S42_LH_D6), width = 10, height = 8, dpi = 600)
+cat("✓ Saved: volcano_S42_LCvsHC_Day6.png\n")
+
+ggsave(paste0(out_deg, "volcano_S399_LCvsHC_Day2.png"),
+       nl(v_S399_LH_D2), width = 10, height = 8, dpi = 600)
+cat("✓ Saved: volcano_S399_LCvsHC_Day2.png\n")
+
+ggsave(paste0(out_deg, "volcano_S399_LCvsHC_Day6.png"),
+       nl(v_S399_LH_D6), width = 10, height = 8, dpi = 600)
+cat("✓ Saved: volcano_S399_LCvsHC_Day6.png\n")
 
 # PART 6 — GO ENRICHMENT DOT PLOTS-----------
 
