@@ -32,17 +32,17 @@ module load R/4.4.1
 # 1. Generate key on array task 1
 if [ "$SLURM_ARRAY_TASK_ID" -eq 1 ]; then
     echo "Running Key Generation for $INPUT_FILE..."
-    Rscript melika_key.r
+    Rscript Melika_key.R
 fi
 
 # 2. Run array task
 echo "Running Array Task: $SLURM_ARRAY_TASK_ID"
-Rscript melika_driver.r
+Rscript Melika_driver.R
 
 # 3. Combine output on last array task
 if [ "$SLURM_ARRAY_TASK_ID" -eq 659 ]; then
     echo "Running Final Output Combination into $FINAL_OUTPUT_NAME..."
-    Rscript melika_combine.r
+    Rscript Melika_combine2.R
 fi
 
 # Clean up
