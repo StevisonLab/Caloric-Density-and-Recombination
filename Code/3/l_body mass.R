@@ -50,7 +50,7 @@ anova_summary <- tidy(anova_result) %>%
       TRUE ~ ""
     )
   )
-write.csv(anova_summary,"../../Summaries and Outputs/3/bodymass_Anova_table.csv",row.names = FALSE, quote = FALSE)
+write.csv(anova_summary,"../../Summaries and Outputs/3/55_bodymass_Anova_table.csv",row.names = FALSE, quote = FALSE)
 
 #-------------------------
 # Post-hoc with emmeans
@@ -61,7 +61,7 @@ genotype_emm <- emmeans(anova_result, ~ Genotype | Brood )  # consider Brood bec
 genotype_posthoc <- pairs(genotype_emm, adjust = "tukey")
 summary(genotype_posthoc)
 write.csv(as.data.frame(genotype_posthoc),
-          "../../Summaries and Outputs/3/Tukey_Genotype.csv", row.names = FALSE)
+          "../../Summaries and Outputs/3/56_Tukey_Genotype.csv", row.names = FALSE)
 
 # Get letters for plotting
 genotype_cld <- cld(genotype_emm, Letters = letters, adjust = "tukey")
@@ -71,7 +71,7 @@ treatment_emm <- emmeans(anova_result, ~ treatment | Brood)
 treatment_posthoc <- pairs(treatment_emm, adjust = "tukey")
 summary(treatment_posthoc)
 write.csv(as.data.frame(treatment_posthoc),
-          "../../Summaries and Outputs/3/Tukey_Treatment.csv", row.names = FALSE)
+          "../../Summaries and Outputs/3/57_Tukey_Treatment.csv", row.names = FALSE)
 
 # Get letters for plotting
 treatment_cld <- cld(treatment_emm, Letters = letters, adjust = "tukey")
@@ -112,7 +112,7 @@ abc <- ggplot(merged_data, aes(x = treatment, y = Scale, fill = Genotype)) +
 abc
 
 ggsave(
-  filename = "../../Summaries and Outputs/3/55_bodymass.png",
+  filename = "../../Summaries and Outputs/3/58_bodymass.png",
   plot = abc,
   width = 20,
   height = 7,

@@ -5,31 +5,31 @@
 setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/3")
 
 # Recombination frequencies
-source("../../Code/c_RecombinationFrequency.R")
+source("../../Code/3/c_RecombinationFrequency.R")
 
 # Interference
-source("../../Code/d_Interference.R")
+source("../../Code/3/d_Interference.R")
 
 # Figures
-source("../../Code/e_visualization.R")
-source("../../Code/f_visualizafion_RF.R")
+source("../../Code/3/e_visualization.R")
+source("../../Code/3/f_visualizafion_RF.R")
 
 # Confidence intervals
-source("../../Code/g_RR_Intervals.R")
+source("../../Code/3/g_RR_Intervals.R")
 
 # MLE vs Kosambi comparison
-source("../../Code/h_MLE-Kossambi_comparison.R")
+source("../../Code/3/h_MLE-Kossambi_comparison.R")
 
 # Fecundity, fertility and viability
-source("../../Code/i_plot_fecundity-fertility-viability.R")
+source("../../Code/3/i_plot_fecundity-fertility-viabilty.R")
 
 # Marker viability
-source("../../Code/j_marker present viability.R")
+source("../../Code/3/j_marker present viabilty.R")
 
 # RR survivorship
-source("../../Code/k_RR-SURVIVERSHIP.R")
+source("../../Code/3/k_RR-SURVIVERSHIP.R")
 
 # Body mass
-source("../../Code/l_body mass.R")
+source("../../Code/3/l_body mass.R")
 
 cat("\nPipeline complete.\n")

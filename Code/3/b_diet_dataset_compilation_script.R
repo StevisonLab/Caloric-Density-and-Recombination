@@ -41,16 +41,6 @@ derived_marker_free_male_viability <- derived_marker_free_dataset$male_adult_cou
 derived_marker_free_total_viability <- derived_marker_free_dataset$total_adult_count / derived_marker_free_dataset$transformed_mean_marker_free_total_egg_count
 marker_free_viability_dataset <- cbind(derived_marker_free_dataset, derived_marker_free_female_viability, derived_marker_free_male_viability, derived_marker_free_total_viability)
 write.csv(marker_free_viability_dataset, "../../Summaries and Outputs/3/F_marker_free_viability_dataset.csv", row.names = TRUE)
-####not sure|||| i didnot do it !!!!
-#marker_free_viability_dataset <- marker_free_viability_dataset %>%
-  filter(
-    derived_marker_free_total_viability >= quantile(derived_marker_free_total_viability, 0.25, na.rm = TRUE) -
-      1.5 * IQR(derived_marker_free_total_viability, na.rm = TRUE),
-    derived_marker_free_total_viability <= quantile(derived_marker_free_total_viability, 0.75, na.rm = TRUE) +
-      1.5 * IQR(derived_marker_free_total_viability, na.rm = TRUE)
-  ) %>%
-  ungroup()
-
 #$#
 marker_free_viability_long <- data.frame(
   Cross = rep(marker_free_viability_dataset$cross_id, times = 2),
