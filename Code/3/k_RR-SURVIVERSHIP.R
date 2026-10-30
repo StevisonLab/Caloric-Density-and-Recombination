@@ -239,144 +239,97 @@ ggsave(
 # ============================================================
 # STEP 5: RESULTS TABLES FOR MANUSCRIPT
 # ============================================================
+# Load required libraries
+library(lme4)
+library(lmerTest)
+library(broom.mixed)
+library(dplyr)
+library(purrr)
+library(tidyr)
 
-library(broom)
-
-# ------------------------------------------------------------
-# 5.1 Summary statistics by Treatment × Genotype × Brood
-# ------------------------------------------------------------
-
-results_summary <- combined_vial_data %>%
-  group_by(Treatment, Genotype, Brood) %>%
-  summarise(
-    n_vials = n(),
-    
-    mean_RR = mean(RR, na.rm = TRUE),
-    sd_RR   = sd(RR, na.rm = TRUE),
-    se_RR   = sd_RR / sqrt(n_vials),
-    
-    mean_Viability = mean(Viability, na.rm = TRUE),
-    sd_Viability   = sd(Viability, na.rm = TRUE),
-    se_Viability   = sd_Viability / sqrt(n_vials),
-    
-    .groups = "drop"
+#============================================================
+#  STEP 5: GROUPED GLMM SUB-MODELS & MANUSCRIPT OUTPUTS
+#============================================================
+  
+  # Ensure factors are set properly
+  combined_vial_data <- combined_vial_data %>%
+  mutate(
+    Treatment      = factor(Treatment),
+    Genotype       = factor(Genotype),
+    Brood          = factor(Brood),
+    Data_collector = factor(Data_collector),
+    VialID         = factor(VialID)
   )
 
-print(results_summary)
-
-# Save table
-write.csv(
-  results_summary,
-  "../../Summaries and Outputs/3/49_Results_Summary_Table.csv",
-  row.names = FALSE
-)
-
 # ------------------------------------------------------------
-# 5.2 Correlation tests for RR vs Viability
+# 5.1 Fit Subgroup GLMMs (Grouped by Treatment x Genotype x Brood)
 # ------------------------------------------------------------
 
-correlation_results <- combined_vial_data %>%
-  group_by(Treatment, Genotype, Brood) %>%
-  summarise(
-    cor_test = list(cor.test(RR, Viability, method = "pearson")),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    correlation = map_dbl(cor_test, ~ .x$estimate),
-    p_value     = map_dbl(cor_test, ~ .x$p.value),
-    conf_low    = map_dbl(cor_test, ~ .x$conf.int[1]),
-    conf_high   = map_dbl(cor_test, ~ .x$conf.int[2])
-  ) %>%
-  select(-cor_test)
-
-print(correlation_results)
-
-write.csv(
-  correlation_results,
-  "../../Summaries and Outputs/3/50_Correlation_Results.csv",
-  row.names = FALSE
-)
-
-# ------------------------------------------------------------
-# 5.3 Linear model statistics
-# RR ~ Viability
-# ------------------------------------------------------------
-
-lm_results <- combined_vial_data %>%
+glmm_results <- combined_vial_data %>%
   group_by(Treatment, Genotype, Brood) %>%
   nest() %>%
   mutate(
-    model = map(data, ~ lm(RR ~ Viability, data = .x)),
-    tidy  = map(model, tidy),
-    glance = map(model, glance)
+    # Fit random-intercept GLMM for each subgroup
+    # Controlling for observer/batch effects via (1 | Data_collector)
+    model = map(data, ~ tryCatch(
+      lmer(RR ~ Viability + (1 | Data_collector), data = .x),
+      error = function(e) NULL
+    )),
+    
+    # Extract tidy fixed-effect estimates
+    tidy_res = map(model, ~ if (!is.null(.x)) broom.mixed::tidy(.x, effects = "fixed") else NULL),
+    
+    # Extract model fit statistics
+    glance_res = map(model, ~ if (!is.null(.x)) broom.mixed::glance(.x) else NULL)
   )
 
-# Extract coefficients
-lm_coefficients <- lm_results %>%
-  unnest(tidy) %>%
+# ------------------------------------------------------------
+# 5.2 Extract & Save GLMM Coefficients (Viability Effect)
+# ------------------------------------------------------------
+
+glmm_coefficients <- glmm_results %>%
+  filter(!map_lgl(tidy_res, is.null)) %>%
+  unnest(tidy_res) %>%
   filter(term == "Viability") %>%
-  select(
-    Treatment,
-    Genotype,
-    Brood,
-    estimate,
-    std.error,
-    statistic,
-    p.value
-  )
+  select(Treatment, Genotype, Brood, estimate, std.error, statistic, p.value)
 
-print(lm_coefficients)
+print(glmm_coefficients)
 
+# Save coefficients table
 write.csv(
-  lm_coefficients,
-  "../../Summaries and Outputs/3/51_LM_Coefficients.csv",
-  row.names = FALSE
-)
-
-# Extract model fit statistics
-lm_fit_stats <- lm_results %>%
-  unnest(glance) %>%
-  select(
-    Treatment,
-    Genotype,
-    Brood,
-    r.squared,
-    adj.r.squared,
-    sigma,
-    p.value,
-    AIC,
-    BIC
-  )
-
-print(lm_fit_stats)
-
-write.csv(
-  lm_fit_stats,
-  "../../Summaries and Outputs/3/52_LM_Fit_Statistics.csv",
+  glmm_coefficients, 
+  "../../Summaries and Outputs/3/51_GLMM_Coefficients.csv", 
   row.names = FALSE
 )
 
 # ------------------------------------------------------------
-# 5.4 Create manuscript-ready text output
+# 5.3 Model Fit Statistics
 # ------------------------------------------------------------
 
-results_text <- lm_coefficients %>%
+glmm_fit_stats <- glmm_results %>%
+  filter(!map_lgl(glance_res, is.null)) %>%
+  unnest(glance_res) %>%
+  select(Treatment, Genotype, Brood, nobs, AIC, BIC, logLik)
+
+print(glmm_fit_stats)
+
+# Save fit statistics
+write.csv(
+  glmm_fit_stats, 
+  "../../Summaries and Outputs/3/52_GLMM_Fit_Statistics.csv", 
+  row.names = FALSE
+)
+
+# ------------------------------------------------------------
+# 5.4 Create Manuscript-Ready Text Output
+# ------------------------------------------------------------
+
+results_text <- glmm_coefficients %>%
   mutate(
     significance = ifelse(p.value < 0.05, "significant", "non-significant"),
-    
-    sentence = paste0(
-      "In genotype ", Genotype,
-      " under the ", Treatment,
-      " treatment during brood ", Brood,
-      ", recombination rate showed a ",
-      significance,
-      " association with viability (β = ",
-      round(estimate, 3),
-      " ± ",
-      round(std.error, 3),
-      ", p = ",
-      signif(p.value, 3),
-      ")."
+    sentence = sprintf(
+      "For Treatment %s, Genotype %s, Brood %s: Viability had a %s effect on RR (β = %.4f ± %.4f, t = %.3f, p = %.4f).",
+      Treatment, Genotype, Brood, significance, estimate, std.error, statistic, p.value
     )
   )
 
@@ -386,34 +339,30 @@ cat("\n=============================================\n")
 
 # Save manuscript text
 writeLines(
-  results_text$sentence,
+  results_text$sentence, 
   "../../Summaries and Outputs/3/53_Results_Text.txt"
 )
 
 # ------------------------------------------------------------
-# 5.5 Overall treatment/genotype means
-# Useful for main Results section
+# 5.5 Overall Treatment / Genotype Summary
 # ------------------------------------------------------------
 
 overall_summary <- combined_vial_data %>%
   group_by(Treatment, Genotype) %>%
   summarise(
     n_vials = n(),
-    
-    RR_mean = mean(RR, na.rm = TRUE),
-    RR_se   = sd(RR, na.rm = TRUE) / sqrt(n_vials),
-    
-    Viability_mean = mean(Viability, na.rm = TRUE),
-    Viability_se   = sd(Viability, na.rm = TRUE) / sqrt(n_vials),
-    
+    mean_RR = mean(RR, na.rm = TRUE),
+    sd_RR   = sd(RR, na.rm = TRUE),
+    mean_Viability = mean(Viability, na.rm = TRUE),
+    sd_Viability   = sd(Viability, na.rm = TRUE),
     .groups = "drop"
   )
 
 print(overall_summary)
 
+# Save overall summary
 write.csv(
-  overall_summary,
-  "../../Summaries and Outputs/3/54_Overall_Group_Summary.csv",
+  overall_summary, 
+  "../../Summaries and Outputs/3/54_Overall_Group_Summary.csv", 
   row.names = FALSE
 )
-

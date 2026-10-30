@@ -21,6 +21,15 @@ multiply_marked_viability_dataset <- multiply_marked_viability_dataset %>%
 library(dplyr)
 library(ggplot2)
 library(broom)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(broom.mixed)
+
+# Type III tests from anova(..., type = 3) are only valid with
+# sum-to-zero contrasts. R's default is treatment contrasts, which
+# will silently give wrong p-values for interaction terms otherwise.
+options(contrasts = c("contr.sum", "contr.poly"))
 
 MOTHERS_PER_VIAL <- 3
 traits <- c("Fecundity", "Fertility", "Viability")
@@ -56,7 +65,7 @@ marker_free_life_history <- marker_free_viability_dataset %>%
 # ============================================================
 # MARKER-PRESENT DATA
 # ============================================================
-  marker_present_life_history <- multiply_marked_viability_dataset %>%
+marker_present_life_history <- multiply_marked_viability_dataset %>%
   mutate(
     Dataset   = "Marker-present",
     Fecundity = transformed_mean_multiply_marked_total_egg_count / female_in_vial,
@@ -68,7 +77,7 @@ marker_free_life_history <- marker_free_viability_dataset %>%
     Treatment = treatment,
     Genotype  = genotype,
     Brood     = brood_id,
-    vialID      = cross_id,   
+    vialID      = cross_id,
     Dataset,
     Fecundity,
     Fertility,
@@ -93,12 +102,13 @@ life_history_all <- bind_rows(
     Treatment = factor(Treatment),
     Genotype  = factor(Genotype),
     Brood     = factor(Brood),
+    vialID    = factor(vialID),
     Dataset   = factor(Dataset),
     Data_collector = factor(Data_collector)
   )
 
 # ============================================================
-# TRAIT PLOTS (UNCHANGED)
+# TRAIT PLOTS (base, unused once plot_trait is redefined below)
 # ============================================================
 plot_trait <- function(trait_name, y_label) {
   ggplot(
@@ -115,13 +125,14 @@ plot_trait <- function(trait_name, y_label) {
       x = "Treatment"
     ) +
     scale_fill_manual(values = c(
-   #   "42"  = "#ff7f00",
-  #    "399" = "#984ea3"
       "399" = "#4a1486",  # purple
       "42"  = "#99000d"   # orange
     ))
 }
-#reaction norm-----------
+
+# ============================================================
+# REACTION NORM HELPERS
+# ============================================================
 get_significance <- function(anova_table) {
   
   # Trim whitespace from term names
@@ -140,6 +151,7 @@ get_significance <- function(anova_table) {
     sig_GxE = isTRUE(get_p("Treatment:Genotype") < 0.05)
   )
 }
+
 # Format terms (bold if significant) — no quotes inside bold()
 fmt_term <- function(term, significant) {
   if (isTRUE(significant)) {
@@ -160,8 +172,12 @@ build_eq_label <- function(sig_list, trait_name) {
     ")"
   )
 }
+
 # ============================================================
-# RUN ANOVA + STORE LABELS
+# RUN GLMM (lmer) PER DATASET × TRAIT
+# — builds significance labels for plots AND writes
+#   ANOVA / emmeans / pairwise-comparison CSVs, all from a
+#   single model fit.
 # ============================================================
 
 anova_labels <- list()
@@ -173,31 +189,76 @@ for (dataset_name in unique(as.character(life_history_all$Dataset))) {
   
   for (trait in traits) {
     
+    cat("\n================ GLMM:", dataset_name, "-", trait, "================\n")
+    
     df_trait <- df_subset %>%
       filter(is.finite(.data[[trait]]))
     
-    if (nrow(df_trait) > 1) {
+    if (nrow(df_trait) <= 1) next
+    
+    formula_str <- as.formula(
+      paste(trait, "~ Treatment * Genotype * Brood + (1 | vialID) + (1 | Data_collector)")
+    )
+    
+    fit_result <- tryCatch({
       
-      model <- aov(
-        as.formula(paste(trait, "~ Treatment * Genotype * Brood + Data_collector")),
-        data = df_trait
-      )
+      model_glmm <- lmer(formula_str, data = df_trait)
       
-      anova_table <- as.data.frame(summary(model)[[1]])
+      # Type III ANOVA table (Satterthwaite approximation)
+      anova_table <- as.data.frame(anova(model_glmm, type = 3))
       anova_table$Term <- rownames(anova_table)
       rownames(anova_table) <- NULL
       
+      # --- labels for reaction-norm plots ---
       sig_list <- get_significance(anova_table)
-      
       eq_label <- build_eq_label(sig_list, trait)
-      
       anova_labels[[paste(dataset_name, trait, sep = "_")]] <- eq_label
-    }
+      
+      # --- estimated marginal means & post-hoc comparisons ---
+      emm_trait   <- emmeans(model_glmm, ~ Treatment | Genotype)
+      pairs_trait <- pairs(emm_trait, adjust = "tukey")
+      
+      emm_pct <- as.data.frame(emm_trait) %>%
+        group_by(Genotype) %>%
+        mutate(
+          Control_Mean   = emmean[Treatment == "1.0x"],
+          Percent_Change = ((emmean - Control_Mean) / Control_Mean) * 100
+        ) %>%
+        ungroup()
+      
+      # --- write outputs ---
+      anova_table$Dataset <- dataset_name
+      anova_table$Trait    <- trait
+      
+      write.csv(
+        anova_table,
+        paste0("../../Summaries and Outputs/3/41_GLMM_ANOVA_",
+               dataset_name, "_", trait, ".csv"),
+        row.names = FALSE
+      )
+      write.csv(
+        as.data.frame(pairs_trait),
+        paste0("../../Summaries and Outputs/3/41_GLMM_pairs_",
+               dataset_name, "_", trait, ".csv"),
+        row.names = FALSE
+      )
+      write.csv(
+        emm_pct,
+        paste0("../../Summaries and Outputs/3/41_GLMM_emmeans_pct_",
+               dataset_name, "_", trait, ".csv"),
+        row.names = FALSE
+      )
+      
+      TRUE
+    }, error = function(e) {
+      message("  ! Model failed for ", dataset_name, " - ", trait, ": ", conditionMessage(e))
+      FALSE
+    })
   }
 }
 
 # ============================================================
-# UPDATED PLOT FUNCTION
+# UPDATED PLOT FUNCTION (uses anova_labels from GLMM above)
 # ============================================================
 
 plot_trait <- function(trait_name, y_label) {
@@ -274,52 +335,6 @@ ggsave("../../Summaries and Outputs/3/40_trait_viability.png",
        plot = p_viability, width = 20, height = 6, dpi = 300)
 
 # ============================================================
-# ANOVA — SEPARATE BY DATASET AND TRAIT (NO PLOTTING)
-# ============================================================
-run_anova <- function(df, trait) {
-  aov(
-    as.formula(paste(trait, "~ Treatment * Genotype * Brood + Data_collector")),
-    data = df
-  )
-}
-
-for (dataset_name in unique(as.character(life_history_all$Dataset))) {
-  
-  df_subset <- life_history_all %>%
-    filter(Dataset == dataset_name)
-  
-  for (trait in traits) {
-    
-    # remove NA/NaN/Inf values per trait
-    df_trait <- df_subset %>%
-      filter(is.finite(.data[[trait]]))
-    
-    # only run ANOVA if there is enough data
-    if (nrow(df_trait) > 1) {
-      model <- run_anova(df_trait, trait)
-      
-      anova_table <- as.data.frame(summary(model)[[1]])
-      anova_table$Term <- rownames(anova_table)
-      anova_table$Dataset <- dataset_name
-      anova_table$Trait <- trait
-      
-      rownames(anova_table) <- NULL
-      
-      write.csv(
-        anova_table,
-        paste0(
-          "../../Summaries and Outputs/3/41_ANOVA_",
-          dataset_name, "_",
-          trait,
-          ".csv"
-        ),
-        row.names = FALSE
-      )
-    }
-  }
-}
-
-# ============================================================
 # SAVE CLEANED DATASET
 # ============================================================
 write.csv(
@@ -385,13 +400,13 @@ for (ds_label in names(datasets)) {
       stat_summary(fun = mean, geom = "point",    size = 6) +
       stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.35) +
       
-     # geom_text(
-       # data        = label_df,
-        #aes(x = x, y = y, label = label),
-        #parse       = TRUE,
-        #inherit.aes = FALSE,
-        #size        = 8
-    #  ) +
+      # geom_text(
+      # data        = label_df,
+      #aes(x = x, y = y, label = label),
+      #parse       = TRUE,
+      #inherit.aes = FALSE,
+      #size        = 8
+      #  ) +
       
       ylim(0, 100) +
       
@@ -424,4 +439,3 @@ for (ds_label in names(datasets)) {
     message("Saved: ", fname)
   }
 }
-

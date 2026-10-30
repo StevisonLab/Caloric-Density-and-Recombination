@@ -11,6 +11,7 @@ library(lme4)
 library(lmerTest)
 library(broom)
 library(tidyr)
+
 # 1. Read and prepare main data
 df <- read.csv("Nutrition_countingmodel_outputs_all.csv")
 #df<- read.csv("Nutrition_countingmodel_outputs_crosspooled.csv")
@@ -60,10 +61,39 @@ df <- df %>%
 boxplot(recombination_fractions ~ Diet * GB, data = df)
 write.csv(df, "23_df_RR_cleaned.csv", row.names = FALSE)
 
-# 3. ANOVA
-anova_result <- aov(recombination_fractions ~ Brood * Diet * GB , data = df)
-summary(anova_result)
-anova_summary <- tidy(anova_result) %>%
+# 3. 
+# Fit GLMM for Recombination Rate / Recombination Fraction
+rr_glmm <- lmer(
+  recombination_fractions ~ Brood * Diet * GB + (1 | vialID) + (1 | People), 
+  data = df
+)
+
+# Extract Type III ANOVA
+rr_anova <- anova(rr_glmm, type = 3)
+print(rr_anova)
+
+# Estimated Marginal Means across Diets grouped by Genotype (GB)
+rr_emm <- emmeans(rr_glmm, ~ Diet | GB)
+
+# Pairwise Post-Hoc Comparisons
+rr_pairs <- pairs(rr_emm, adjust = "tukey")
+
+# Detailed Percent Change calculation relative to 1.0x Diet
+rr_pct <- as.data.frame(rr_emm) %>%
+  group_by(GB) %>%
+  mutate(
+    Control_Mean = emmean[Diet == "1.0x"],
+    Percent_Change = ((emmean - Control_Mean) / Control_Mean) * 100
+  )
+
+# Save Outputs
+write.csv(as.data.frame(rr_anova), "24_recombination_glmm_anova.csv")
+write.csv(as.data.frame(rr_pairs), "24_recombination_glmm_pairs.csv")
+write.csv(rr_pct, "24_recombination_glmm_emmeans_pct.csv")
+
+#anova_result <- aov(recombination_fractions ~ Brood * Diet * GB , data = df)
+#summary(anova_result)
+#anova_summary <- tidy(anova_result) %>%
   mutate(
     significance = case_when(
       p.value < 0.001 ~ "***",
@@ -72,44 +102,7 @@ anova_summary <- tidy(anova_result) %>%
       p.value < 0.1   ~ ".",
       TRUE ~ ""
     ))
-write.csv(anova_summary, "../../Summaries and Outputs/3/24_anova_model_recombination.csv", row.names = FALSE)
-
-# 4. Post hoc Tukey
-TukeyHSD(anova_result)
-
-# 5. Estimated marginal means and CLD
-emm <- emmeans(anova_result, ~ Diet *GB*Brood)
-cld <- cld(emm, Letters = letters)
-
-plot_data <- cld %>%
-  mutate(
-   Brood=factor(Brood),
-    GB = factor(GB),
-   # People= factor(People),
-    Diet = factor(Diet, levels = c("0.5x", "1.0x","2.0x")),
-    .group = trimws(.group) # remove extra spaces
-  )
-# Plot
-p1=ggplot(plot_data, aes(x = Brood, y = emmean, color = GB, group = Diet)) +
-  geom_point(position = position_dodge(0.4), size = 3) +
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL),
-                width = 0.2, position = position_dodge(0.4)) +
-  geom_text(aes(label = .group),
-            vjust = -0.8,
-            position = position_dodge(0.4),
-            size = 5) +
-  labs(x = "Diets",
-       y = "Recombination Rate (Mean ± SE)",
-       color = "Genotype") +
-  theme_classic(base_size = 14)
-p1
-ggsave(
-  filename = "../../Summaries and Outputs/1/25_cld_recombinationrate.png",
-  plot = p1,
-  width = 8,
-  height = 6,
-  dpi = 300
-)
+#write.csv(anova_summary, "../../Summaries and Outputs/3/24_anova_model_recombination.csv", row.names = FALSE)
 
 # 6. Visualization
 p2=ggplot(df, aes(x = Diet, y = recombination_fractions, fill = as.factor(GB))) +

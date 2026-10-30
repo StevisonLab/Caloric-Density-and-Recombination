@@ -11,6 +11,7 @@ library(lme4)
 library(lmerTest)
 library(broom)
 library(tidyr)
+
 # 1. Read and prepare main data
 df <- read.csv("16_recombination_frequency_per_vial.csv")
 #df <- df %>% rename(recombination_fractions = Total_RF)
@@ -56,10 +57,39 @@ df <- df %>%
 boxplot(recombination_fractions ~ Diet * GB, data = df)
 write.csv(df,"30_df_RecombinationFrequency_cleaned.csv", row.names = FALSE)
 
-# 3. ANOVA
-anova_result <- aov(recombination_fractions ~ Brood * Diet * GB , data = df)
-summary(anova_result)
-anova_summary <- tidy(anova_result) %>%
+# 3. 
+# Fit GLMM for Recombination Rate / Recombination Fraction
+rr_glmm <- lmer(
+  recombination_fractions ~ Brood * Diet * GB + (1 | vialID) + (1 | People), 
+  data = df
+)
+
+# Extract Type III ANOVA
+rr_anova <- anova(rr_glmm, type = 3)
+print(rr_anova)
+
+# Estimated Marginal Means across Diets grouped by Genotype (GB)
+rr_emm <- emmeans(rr_glmm, ~ Diet | GB)
+
+# Pairwise Post-Hoc Comparisons
+rr_pairs <- pairs(rr_emm, adjust = "tukey")
+
+# Detailed Percent Change calculation relative to 1.0x Diet
+rr_pct <- as.data.frame(rr_emm) %>%
+  group_by(GB) %>%
+  mutate(
+    Control_Mean = emmean[Diet == "1.0x"],
+    Percent_Change = ((emmean - Control_Mean) / Control_Mean) * 100
+  )
+
+# Save Outputs
+write.csv(as.data.frame(rr_anova), "31_recombinationfrequency_glmm_anova.csv")
+write.csv(as.data.frame(rr_pairs), "31_recombinationfrequency_glmm_pairs.csv")
+write.csv(rr_pct, "31_recombinationfrequency_glmm_emmeans_pct.csv")
+
+#anova_result <- aov(recombination_fractions ~ Brood * Diet * GB , data = df)
+#summary(anova_result)
+#anova_summary <- tidy(anova_result) %>%
   mutate(
     significance = case_when(
       p.value < 0.001 ~ "***",
@@ -68,7 +98,7 @@ anova_summary <- tidy(anova_result) %>%
       p.value < 0.1   ~ ".",
       TRUE ~ ""
     ))
-write.csv(anova_summary, "../../Summaries and Outputs/3/31_anova_model_recombinationfrequency.csv", row.names = FALSE)
+#write.csv(anova_summary, "../../Summaries and Outputs/3/31_anova_model_recombinationfrequency.csv", row.names = FALSE)
 
 # 6. Visualization
 p2=ggplot(df, aes(x = Diet, y = recombination_fractions, fill = as.factor(GB))) +

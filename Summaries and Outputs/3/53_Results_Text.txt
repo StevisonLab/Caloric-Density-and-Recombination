@@ -1,42 +1,42 @@
-In genotype 42 under the 0.5x treatment during brood A, recombination rate showed a non-significant association with viability (β = 0.633 ± 0.358, p = 0.0988).
-In genotype 399 under the 1.0x treatment during brood A, recombination rate showed a non-significant association with viability (β = -0.315 ± 0.26, p = 0.247).
-In genotype 399 under the 0.5x treatment during brood A, recombination rate showed a non-significant association with viability (β = -0.233 ± 0.237, p = 0.344).
-In genotype 399 under the 2.0x treatment during brood A, recombination rate showed a non-significant association with viability (β = -0.059 ± 0.179, p = 0.748).
-In genotype 42 under the 1.0x treatment during brood A, recombination rate showed a non-significant association with viability (β = -0.022 ± 0.292, p = 0.94).
-In genotype 42 under the 2.0x treatment during brood A, recombination rate showed a non-significant association with viability (β = 0.224 ± 0.263, p = 0.408).
-In genotype 42 under the 1.0x treatment during brood B, recombination rate showed a non-significant association with viability (β = 0.227 ± 0.407, p = 0.587).
-In genotype 42 under the 0.5x treatment during brood B, recombination rate showed a non-significant association with viability (β = -0.189 ± 0.265, p = 0.488).
-In genotype 399 under the 1.0x treatment during brood B, recombination rate showed a non-significant association with viability (β = 0.164 ± 0.354, p = 0.65).
-In genotype 399 under the 0.5x treatment during brood B, recombination rate showed a non-significant association with viability (β = -0.088 ± 0.284, p = 0.762).
-In genotype 399 under the 2.0x treatment during brood B, recombination rate showed a non-significant association with viability (β = 0.285 ± 0.221, p = 0.22).
-In genotype 42 under the 2.0x treatment during brood B, recombination rate showed a non-significant association with viability (β = 0.257 ± 0.233, p = 0.29).
-In genotype 42 under the 1.0x treatment during brood C, recombination rate showed a non-significant association with viability (β = 0.088 ± 0.501, p = 0.864).
-In genotype 42 under the 0.5x treatment during brood C, recombination rate showed a non-significant association with viability (β = 0.243 ± 0.298, p = 0.428).
-In genotype 399 under the 1.0x treatment during brood C, recombination rate showed a non-significant association with viability (β = 0.119 ± 0.291, p = 0.69).
-In genotype 399 under the 0.5x treatment during brood C, recombination rate showed a non-significant association with viability (β = -0.288 ± 0.229, p = 0.229).
-In genotype 399 under the 2.0x treatment during brood C, recombination rate showed a non-significant association with viability (β = -0.444 ± 0.301, p = 0.165).
-In genotype 42 under the 2.0x treatment during brood C, recombination rate showed a non-significant association with viability (β = 0.214 ± 0.297, p = 0.483).
-In genotype 42 under the 1.0x treatment during brood D, recombination rate showed a non-significant association with viability (β = -0.198 ± 0.227, p = 0.396).
-In genotype 42 under the 0.5x treatment during brood D, recombination rate showed a non-significant association with viability (β = 0.148 ± 0.487, p = 0.767).
-In genotype 399 under the 1.0x treatment during brood D, recombination rate showed a non-significant association with viability (β = -0.06 ± 0.16, p = 0.714).
-In genotype 399 under the 0.5x treatment during brood D, recombination rate showed a non-significant association with viability (β = -0.474 ± 0.341, p = 0.186).
-In genotype 399 under the 2.0x treatment during brood D, recombination rate showed a non-significant association with viability (β = 0.513 ± 0.313, p = 0.125).
-In genotype 42 under the 2.0x treatment during brood D, recombination rate showed a non-significant association with viability (β = -0.131 ± 0.465, p = 0.783).
-In genotype 42 under the 0.5x treatment during brood E, recombination rate showed a non-significant association with viability (β = -0.291 ± 0.244, p = 0.253).
-In genotype 42 under the 1.0x treatment during brood E, recombination rate showed a non-significant association with viability (β = 0.145 ± 0.199, p = 0.478).
-In genotype 399 under the 1.0x treatment during brood E, recombination rate showed a non-significant association with viability (β = 0.525 ± 0.309, p = 0.113).
-In genotype 399 under the 0.5x treatment during brood E, recombination rate showed a non-significant association with viability (β = -0.001 ± 0.363, p = 0.998).
-In genotype 399 under the 2.0x treatment during brood E, recombination rate showed a non-significant association with viability (β = -0.372 ± 0.261, p = 0.179).
-In genotype 42 under the 2.0x treatment during brood E, recombination rate showed a non-significant association with viability (β = 0.303 ± 0.275, p = 0.289).
-In genotype 42 under the 1.0x treatment during brood F, recombination rate showed a non-significant association with viability (β = 0.2 ± 0.367, p = 0.595).
-In genotype 42 under the 0.5x treatment during brood F, recombination rate showed a non-significant association with viability (β = 0.134 ± 0.243, p = 0.592).
-In genotype 399 under the 1.0x treatment during brood F, recombination rate showed a non-significant association with viability (β = 0.077 ± 0.272, p = 0.781).
-In genotype 399 under the 0.5x treatment during brood F, recombination rate showed a non-significant association with viability (β = -0.014 ± 0.308, p = 0.965).
-In genotype 399 under the 2.0x treatment during brood F, recombination rate showed a non-significant association with viability (β = 0.295 ± 0.228, p = 0.218).
-In genotype 42 under the 2.0x treatment during brood F, recombination rate showed a non-significant association with viability (β = 0.286 ± 0.157, p = 0.0909).
-In genotype 42 under the 1.0x treatment during brood G, recombination rate showed a non-significant association with viability (β = -0.441 ± 0.231, p = 0.0767).
-In genotype 42 under the 0.5x treatment during brood G, recombination rate showed a non-significant association with viability (β = -0.208 ± 0.293, p = 0.491).
-In genotype 399 under the 1.0x treatment during brood G, recombination rate showed a non-significant association with viability (β = -0.35 ± 0.341, p = 0.324).
-In genotype 399 under the 0.5x treatment during brood G, recombination rate showed a non-significant association with viability (β = 0.002 ± 0.181, p = 0.991).
-In genotype 399 under the 2.0x treatment during brood G, recombination rate showed a non-significant association with viability (β = 0.249 ± 0.166, p = 0.157).
-In genotype 42 under the 2.0x treatment during brood G, recombination rate showed a non-significant association with viability (β = 0.186 ± 0.324, p = 0.575).
+For Treatment 0.5x, Genotype 42, Brood A: Viability had a non-significant effect on RR (β = 0.6333 ± 0.3581, t = 1.768, p = 0.0988).
+For Treatment 1.0x, Genotype 399, Brood A: Viability had a non-significant effect on RR (β = -0.2619 ± 0.2476, t = -1.057, p = 0.3112).
+For Treatment 0.5x, Genotype 399, Brood A: Viability had a non-significant effect on RR (β = -0.2759 ± 0.2284, t = -1.208, p = 0.2497).
+For Treatment 2.0x, Genotype 399, Brood A: Viability had a non-significant effect on RR (β = -0.0587 ± 0.1786, t = -0.329, p = 0.7477).
+For Treatment 1.0x, Genotype 42, Brood A: Viability had a non-significant effect on RR (β = -0.0223 ± 0.2916, t = -0.077, p = 0.9402).
+For Treatment 2.0x, Genotype 42, Brood A: Viability had a non-significant effect on RR (β = 0.2311 ± 0.2639, t = 0.876, p = 0.3961).
+For Treatment 1.0x, Genotype 42, Brood B: Viability had a non-significant effect on RR (β = 0.2266 ± 0.4072, t = 0.556, p = 0.5873).
+For Treatment 0.5x, Genotype 42, Brood B: Viability had a non-significant effect on RR (β = -0.1894 ± 0.2654, t = -0.714, p = 0.4880).
+For Treatment 1.0x, Genotype 399, Brood B: Viability had a non-significant effect on RR (β = 0.0446 ± 0.2640, t = 0.169, p = 0.8691).
+For Treatment 0.5x, Genotype 399, Brood B: Viability had a non-significant effect on RR (β = -0.0678 ± 0.2767, t = -0.245, p = 0.8103).
+For Treatment 2.0x, Genotype 399, Brood B: Viability had a non-significant effect on RR (β = 0.2849 ± 0.2212, t = 1.288, p = 0.2202).
+For Treatment 2.0x, Genotype 42, Brood B: Viability had a non-significant effect on RR (β = 0.2139 ± 0.2056, t = 1.040, p = 0.3192).
+For Treatment 1.0x, Genotype 42, Brood C: Viability had a non-significant effect on RR (β = 0.1161 ± 0.5045, t = 0.230, p = 0.8216).
+For Treatment 0.5x, Genotype 42, Brood C: Viability had a non-significant effect on RR (β = 0.2435 ± 0.2976, t = 0.818, p = 0.4280).
+For Treatment 1.0x, Genotype 399, Brood C: Viability had a non-significant effect on RR (β = 0.1748 ± 0.2460, t = 0.711, p = 0.4918).
+For Treatment 0.5x, Genotype 399, Brood C: Viability had a non-significant effect on RR (β = -0.3202 ± 0.2276, t = -1.407, p = 0.1818).
+For Treatment 2.0x, Genotype 399, Brood C: Viability had a non-significant effect on RR (β = -0.4436 ± 0.3014, t = -1.472, p = 0.1648).
+For Treatment 2.0x, Genotype 42, Brood C: Viability had a non-significant effect on RR (β = 0.2138 ± 0.2970, t = 0.720, p = 0.4835).
+For Treatment 1.0x, Genotype 42, Brood D: Viability had a non-significant effect on RR (β = -0.1698 ± 0.2118, t = -0.801, p = 0.4385).
+For Treatment 0.5x, Genotype 42, Brood D: Viability had a non-significant effect on RR (β = 0.0357 ± 0.4778, t = 0.075, p = 0.9417).
+For Treatment 1.0x, Genotype 399, Brood D: Viability had a non-significant effect on RR (β = -0.0600 ± 0.1601, t = -0.375, p = 0.7136).
+For Treatment 0.5x, Genotype 399, Brood D: Viability had a non-significant effect on RR (β = -0.5075 ± 0.3217, t = -1.578, p = 0.1385).
+For Treatment 2.0x, Genotype 399, Brood D: Viability had a non-significant effect on RR (β = 0.5133 ± 0.3126, t = 1.642, p = 0.1246).
+For Treatment 2.0x, Genotype 42, Brood D: Viability had a non-significant effect on RR (β = -0.1313 ± 0.4655, t = -0.282, p = 0.7827).
+For Treatment 0.5x, Genotype 42, Brood E: Viability had a non-significant effect on RR (β = -0.2876 ± 0.2425, t = -1.186, p = 0.2572).
+For Treatment 1.0x, Genotype 42, Brood E: Viability had a non-significant effect on RR (β = 0.1479 ± 0.1979, t = 0.747, p = 0.4689).
+For Treatment 1.0x, Genotype 399, Brood E: Viability had a non-significant effect on RR (β = 0.5247 ± 0.3089, t = 1.698, p = 0.1132).
+For Treatment 0.5x, Genotype 399, Brood E: Viability had a non-significant effect on RR (β = -0.0011 ± 0.3625, t = -0.003, p = 0.9976).
+For Treatment 2.0x, Genotype 399, Brood E: Viability had a non-significant effect on RR (β = -0.3724 ± 0.2611, t = -1.426, p = 0.1793).
+For Treatment 2.0x, Genotype 42, Brood E: Viability had a non-significant effect on RR (β = 0.2931 ± 0.2734, t = 1.072, p = 0.3026).
+For Treatment 1.0x, Genotype 42, Brood F: Viability had a non-significant effect on RR (β = 0.1999 ± 0.3674, t = 0.544, p = 0.5950).
+For Treatment 0.5x, Genotype 42, Brood F: Viability had a non-significant effect on RR (β = 0.1341 ± 0.2434, t = 0.551, p = 0.5918).
+For Treatment 1.0x, Genotype 399, Brood F: Viability had a non-significant effect on RR (β = 0.0773 ± 0.2724, t = 0.284, p = 0.7810).
+For Treatment 0.5x, Genotype 399, Brood F: Viability had a non-significant effect on RR (β = -0.0188 ± 0.3090, t = -0.061, p = 0.9527).
+For Treatment 2.0x, Genotype 399, Brood F: Viability had a non-significant effect on RR (β = 0.2948 ± 0.2276, t = 1.295, p = 0.2178).
+For Treatment 2.0x, Genotype 42, Brood F: Viability had a non-significant effect on RR (β = 0.2862 ± 0.1567, t = 1.826, p = 0.0909).
+For Treatment 1.0x, Genotype 42, Brood G: Viability had a non-significant effect on RR (β = -0.4365 ± 0.2304, t = -1.894, p = 0.0796).
+For Treatment 0.5x, Genotype 42, Brood G: Viability had a non-significant effect on RR (β = -0.2079 ± 0.2931, t = -0.709, p = 0.4907).
+For Treatment 1.0x, Genotype 399, Brood G: Viability had a non-significant effect on RR (β = -0.3496 ± 0.3412, t = -1.024, p = 0.3243).
+For Treatment 0.5x, Genotype 399, Brood G: Viability had a non-significant effect on RR (β = 0.0022 ± 0.1810, t = 0.012, p = 0.9907).
+For Treatment 2.0x, Genotype 399, Brood G: Viability had a non-significant effect on RR (β = 0.2486 ± 0.1656, t = 1.502, p = 0.1570).
+For Treatment 2.0x, Genotype 42, Brood G: Viability had a non-significant effect on RR (β = 0.1844 ± 0.3205, t = 0.575, p = 0.5770).

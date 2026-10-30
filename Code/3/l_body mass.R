@@ -6,15 +6,15 @@ setwd("~/GitHub/Caloric-Density-and-Recombination/Raw Data/3")
 library(dplyr)
 library(tidyr)
 library(tidyverse)
-library(car)
-library(emmeans)
 library(ggplot2)
 library(multcompView)
 library(multcomp)
 library(readr)
 library(stringr)
-library(lme4)
-library(lmerTest) # For p-values in mixed models
+library(lme4)        # For GLMMs (glmer, lmer)
+library(lmerTest)    # For p-values in mixed models
+library(emmeans)     # For post-hoc comparisons and marginal means
+library(car)         # For Type III Anova tables on GLMs
 library(broom)
 
 
@@ -37,10 +37,36 @@ merged_data$Genotype <- as.character(merged_data$Genotype)
 #=================================================
 #                ANOVA + Post-hoc
 #=================================================
+# --- 1. Fit GLMM / GLM for Body Mass ---
+# Incorporating random effects for vial (Cross/vialID)
+body_mass_glm <- lmer(
+  Scale ~ treatment * Genotype * Brood + (1 | ID) ,
+  data = merged_data
+)
 
-anova_result <- aov(Scale ~ Genotype * treatment * Brood, data = merged_data)
-summary(anova_result)
-anova_summary <- tidy(anova_result) %>%
+# Extract ANOVA summary table
+body_mass_anova <- anova(body_mass_glm, type = 3)
+print(body_mass_anova)
+
+# --- Post-Hoc Comparisons & Percent Changes ---
+body_mass_emm <- emmeans(body_mass_glm, ~ treatment | Genotype)
+body_mass_pairs <- pairs(body_mass_emm, adjust = "tukey")
+
+body_mass_pct <- as.data.frame(body_mass_emm) %>%
+  group_by(Genotype) %>%
+  mutate(
+    Control_Mean = emmean[treatment == "1.0x"],
+    Percent_Change = ((emmean - Control_Mean) / Control_Mean) * 100
+  )
+
+# Save Outputs
+write.csv(as.data.frame(body_mass_anova), "../../Summaries and Outputs/3/55_body_mass_glmm_anova.csv")
+write.csv(as.data.frame(body_mass_pairs), "../../Summaries and Outputs/3/55_body_mass_glmm_pairs.csv")
+write.csv(body_mass_pct, "../../Summaries and Outputs/3/55_body_mass_glmm_percentages.csv")
+
+#anova_result <- aov(Scale ~ Genotype * treatment * Brood, data = merged_data)
+#summary(anova_result)
+#anova_summary <- tidy(anova_result) %>%
   mutate(
     significance = case_when(
       p.value < 0.001 ~ "***",
@@ -50,7 +76,7 @@ anova_summary <- tidy(anova_result) %>%
       TRUE ~ ""
     )
   )
-write.csv(anova_summary,"../../Summaries and Outputs/3/55_bodymass_Anova_table.csv",row.names = FALSE, quote = FALSE)
+#write.csv(anova_summary,"../../Summaries and Outputs/3/55_bodymass_Anova_table.csv",row.names = FALSE, quote = FALSE)
 
 #-------------------------
 # Post-hoc with emmeans
