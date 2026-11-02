@@ -1,0 +1,13 @@
+"file","n_rows","n_FDR","n_original_filter","n_without_symbol"
+"S42_HC_D2vsS42_C_D2_deg.xls",12646,432,121,0
+"S42_LC_D2vsS42_C_D2_deg.xls",13016,882,321,0
+"S42_LC_D2vsS42_HC_D2_deg.xls",13035,2730,1077,0
+"S42_HC_D6vsS42_C_D6_deg.xls",12520,439,279,0
+"S42_LC_D6vsS42_C_D6_deg.xls",12438,18,12,0
+"S42_LC_D6vsS42_HC_D6_deg.xls",12701,184,155,0
+"S399_HC_D2vsS399_C_D2_deg.xls",13046,431,129,0
+"S399_LC_D2vsS399_C_D2_deg.xls",12976,122,70,0
+"S399_LC_D2vsS399_HC_D2_deg.xls",12772,63,59,0
+"S399_HC_D6vsS399_C_D6_deg.xls",12112,128,62,0
+"S399_LC_D6vsS399_C_D6_deg.xls",12127,228,113,0
+"S399_LC_D6vsS399_HC_D6_deg.xls",12286,559,334,0
