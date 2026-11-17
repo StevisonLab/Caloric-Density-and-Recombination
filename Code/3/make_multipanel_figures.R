@@ -313,9 +313,9 @@ lh_panel <- function(dataset, yvar, ylab, ylim) {
 }
 
 fec_max <- 60  # common y-range for both fecundity panels
-fig6a <- lh_panel("Marker-free",    "Fecundity", "Eggs per female", c(0, fec_max)) +
+fig6a <- lh_panel("Marker-free",    "Fecundity", "Eggs per female per day", c(0, fec_max)) +
   ggtitle("Marker-free")
-fig6b <- lh_panel("Marker-present", "Fecundity", "Eggs per female", c(0, fec_max)) +
+fig6b <- lh_panel("Marker-present", "Fecundity", "Eggs per female per day", c(0, fec_max)) +
   ggtitle("Marker-present")
 fig6c <- lh_panel("Marker-free",    "Viability", "Egg-to-adult survival (%)", c(0, 100))
 fig6d <- lh_panel("Marker-present", "Viability", "Egg-to-adult survival (%)", c(0, 100))

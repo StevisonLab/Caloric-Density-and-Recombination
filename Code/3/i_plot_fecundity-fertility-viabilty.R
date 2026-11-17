@@ -196,14 +196,37 @@ for (dataset_name in unique(as.character(life_history_all$Dataset))) {
     
     if (nrow(df_trait) <= 1) next
     
-    formula_str <- as.formula(
-      paste(trait, "~ Treatment * Genotype * Brood + (1 | vialID) + (1 | Data_collector)")
-    )
+    
+    # Select model according to response variable
+    
+    if (trait == "Fecundity") {
+      
+      # Egg counts are averaged across egg-counting observers
+      formula_str <- as.formula(
+        paste(trait,
+              "~ Treatment * Genotype * Brood +
+          (1 | vialID)")
+      )
+      
+    } else {
+      
+      # Retain adult observer for fertility and viability
+      formula_str <- as.formula(
+        paste(trait,
+              "~ Treatment * Genotype * Brood +
+          (1 | vialID) + (1 | Data_collector)")
+      )
+      
+    }
+    
     
     fit_result <- tryCatch({
       
-      model_glmm <- lmer(formula_str, data = df_trait)
-      
+      model_glmm <- lmer(
+        formula_str,
+        data = df_trait,
+        REML = TRUE
+      )
       # Type III ANOVA table (Satterthwaite approximation)
       anova_table <- as.data.frame(anova(model_glmm, type = 3))
       anova_table$Term <- rownames(anova_table)

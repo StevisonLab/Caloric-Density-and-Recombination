@@ -139,120 +139,135 @@ write.csv(fecundity_coefficients, "51_MarkerPresent_Fecundity_GLMM_Coefficients.
 write.csv(fecundity_fit_stats, "52_MarkerPresent_Fecundity_GLMM_Fit_Statistics.csv", row.names = FALSE)
 
 
+
 # ============================================================
 # STEP 4: PLOTTING
 # ============================================================
 
-# Helper Function for Slope Plots (Figure 1: Grouped by Genotype, Faceted by Treatment)
 create_slope_plot <- function(coef_df, trait_label, filename) {
+  
   df_plot <- coef_df %>%
     mutate(
-      conf.low = estimate - 1.96 * std.error,
-      conf.high = estimate + 1.96 * std.error,
+      Brood = factor(as.character(Brood),
+                     levels = LETTERS[1:7]),
+      
+      Treatment = factor(as.character(Treatment),
+                         levels = c("0.5x", "1.0x", "2.0x")),
+      
+      conf.low = estimate - qt(0.975, df) * std.error,
+      conf.high = estimate + qt(0.975, df) * std.error,
+      
       sig_symbol = ifelse(p.value < ALPHA, "*", "")
     )
   
-  p <- ggplot(df_plot, aes(x = Brood, y = estimate, color = Genotype, group = Genotype)) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 1) +
-    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, position = position_dodge(0.4), linewidth = 0.8) +
-    geom_line(position = position_dodge(0.4), linewidth = 1.2) +
-    geom_point(position = position_dodge(0.4), size = 3) +
-    geom_text(aes(label = sig_symbol, y = conf.high + 0.05), position = position_dodge(0.4), size = 6, show.legend = FALSE) +
-    facet_wrap(~ Treatment) +
-    scale_color_manual(values = genotype_colors) +
+  pd <- position_dodge(width = 0.4)
+  
+  p <- ggplot(df_plot, aes(
+    x = Brood,
+    y = estimate,
+    color = Genotype,
+    group = Genotype
+  )) +
+    
+    geom_hline(
+      yintercept = 0,
+      linetype = "dashed",
+      color = "gray50"
+    ) +
+    
+    geom_errorbar(
+      aes(ymin = conf.low, ymax = conf.high),
+      width = 0.2,
+      position = pd
+    ) +
+    
+    geom_line(
+      position = pd,
+      linewidth = 1.2
+    ) +
+    
+    geom_point(
+      position = pd,
+      size = 3
+    ) +
+    
+    # Significance asterisks
+    geom_text(
+      aes(label = sig_symbol, y = conf.high + 0.05),
+      position = pd,
+      size = 6,
+      show.legend = FALSE
+    ) +
+    
+    facet_wrap(~ Treatment, nrow = 1) +
+    
+    # Brood labels
+    scale_x_discrete(
+      labels = setNames(
+        paste0(LETTERS[1:7], " (", 1:7, ")"),
+        LETTERS[1:7]
+      )
+    ) +
+    
+    # Genotype colors and labels
+    scale_color_manual(
+      values = genotype_colors,
+      breaks = c("42", "399"),
+      labels = c("DGRP_42", "DGRP_399")
+    ) +
+    scale_y_continuous(
+      breaks = seq(-1.5, 1.5, by = 0.5)
+    ) +
+    coord_cartesian(ylim = c(-1.5, 1.5)) +
+    
     labs(
-      title = paste("Subgroup Regression Slopes: RR vs.", trait_label, "(Marker-Present)"),
-      subtitle = "Slopes (β) with 95% CIs across Broods",
+      title = paste("Recombination Rate vs.", trait_label),
       x = "Brood",
-      y = paste("Effect of", trait_label, "on RR (β)"),
+      y = "Regression slope (β)",
       color = "Genotype"
     ) +
+    
     theme_minimal(base_size = 18) +
+    
     theme(
-      legend.position = "right",
+      legend.position = "bottom",
       strip.background = element_rect(fill = "#f0f0f0"),
       strip.text = element_text(face = "bold"),
-      plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(size = 14, hjust = 0.5)
+      plot.title = element_text(
+        face = "bold",
+        hjust = 0.5
+      )
     )
   
-  ggsave(filename, plot = p, width = 12, height = 6, dpi = 300)
+  ggsave(
+    filename,
+    plot = p,
+    width = 15,
+    height = 6,
+    dpi = 300
+  )
+  
   return(p)
 }
 
-# Generate Slope Plots
-p_viability_slopes <- create_slope_plot(viability_coefficients, "Viability (%)", "MarkerPresent_RR_vs_Viability_Slopes.png")
-p_fecundity_slopes <- create_slope_plot(fecundity_coefficients, "Fecundity (Eggs/Mother)", "MarkerPresent_RR_vs_Fecundity_Slopes.png")
+# ============================================================
+# GENERATE FIGURE 7b: SURVIVAL
+# ============================================================
 
+p_viability_slopes <- create_slope_plot(
+  viability_coefficients,
+  "Egg-to-Adult Survival",
+  "46_RR_SURVIVAL.png"
+)
 
-# Helper Function for Faceted Scatter Plots (Figure 2: Faceted by Treatment, Colored by Genotype)
-create_scatter_plot <- function(data, trait_col, trait_label, filename) {
-  recomb_summary <- data %>%
-    group_by(Treatment, Genotype, Brood) %>%
-    summarise(mean_RR = median(RR, na.rm = TRUE), .groups = "drop")
-  
-  lh_summary <- data %>%
-    group_by(Treatment, Genotype, Brood) %>%
-    summarise(mean_Trait = median(.data[[trait_col]], na.rm = TRUE), .groups = "drop")
-  
-  combined_group_data <- inner_join(recomb_summary, lh_summary, by = c("Brood", "Treatment", "Genotype"))
-  
-  p <- ggplot(combined_group_data, aes(x = mean_Trait, y = mean_RR, color = Genotype)) +
-    geom_point(size = 4, alpha = 0.8) +
-    geom_smooth(method = "lm", se = FALSE, linewidth = 1.5) +
-    facet_wrap(~ Treatment) +
-    scale_color_manual(values = genotype_colors) +
-    labs(
-      title = paste("Recombination Rate vs.", trait_label, "by Treatment & Genotype"),
-      x = paste("Median", trait_label),
-      y = "Median Recombination Rate",
-      color = "Genotype"
-    ) +
-    theme_minimal(base_size = 18) +
-    theme(
-      legend.position = "right",
-      strip.background = element_rect(fill = "#f0f0f0"),
-      strip.text = element_text(face = "bold"),
-      plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
-    )
-  
-  ggsave(filename, plot = p, width = 12, height = 6, dpi = 300)
-  return(p)
-}
-
-# Generate Scatter Plots
-p_viability_scatter <- create_scatter_plot(combined_vial_data, "Viability", "Viability (%)", "MarkerPresent_RR_vs_Viability_Scatter.png")
-p_fecundity_scatter <- create_scatter_plot(combined_vial_data, "Fecundity", "Fecundity (Eggs/Mother)", "MarkerPresent_RR_vs_Fecundity_Scatter.png")
-
+p_viability_slopes
 
 # ============================================================
-# STEP 5: MANUSCRIPT TEXT EXPORT
+# GENERATE FECUNDITY FIGURE
 # ============================================================
-viability_text <- viability_coefficients %>%
-  mutate(
-    significance = ifelse(p.value < 0.05, "significant", "non-significant"),
-    sentence = sprintf(
-      "For Treatment %s, Genotype %s, Brood %s (Marker-Present): Viability had a %s effect on RR (β = %.4f ± %.4f, t = %.3f, p = %.4f).",
-      Treatment, Genotype, Brood, significance, estimate, std.error, statistic, p.value
-    )
-  )
 
-fecundity_text <- fecundity_coefficients %>%
-  mutate(
-    significance = ifelse(p.value < 0.05, "significant", "non-significant"),
-    sentence = sprintf(
-      "For Treatment %s, Genotype %s, Brood %s (Marker-Present): Fecundity had a %s effect on RR (β = %.4f ± %.4f, t = %.3f, p = %.4f).",
-      Treatment, Genotype, Brood, significance, estimate, std.error, statistic, p.value
-    )
-  )
-
-cat("\n================ MARKER-PRESENT VIABILITY RESULTS TEXT ================\n")
-cat(paste(viability_text$sentence, collapse = "\n"))
-
-cat("\n\n================ MARKER-PRESENT FECUNDITY RESULTS TEXT ================\n")
-cat(paste(fecundity_text$sentence, collapse = "\n"))
-
-# Save text outputs
-writeLines(viability_text$sentence, "53_MarkerPresent_Viability_Results.txt")
-writeLines(fecundity_text$sentence, "53_MarkerPresent_Fecundity_Results.txt")
-
+p_fecundity_slopes <- create_slope_plot(
+  fecundity_coefficients,
+  "Maternal Fecundity",
+  "MarkerPresent_RR_vs_Fecundity_Slopes.png"
+)

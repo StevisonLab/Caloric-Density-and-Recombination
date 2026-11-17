@@ -94,14 +94,14 @@ write.csv(rr_pct, "24_recombination_glmm_emmeans_pct.csv")
 #anova_result <- aov(recombination_fractions ~ Brood * Diet * GB , data = df)
 #summary(anova_result)
 #anova_summary <- tidy(anova_result) %>%
-  mutate(
-    significance = case_when(
-      p.value < 0.001 ~ "***",
-      p.value < 0.01  ~ "**",
-      p.value < 0.05  ~ "*",
-      p.value < 0.1   ~ ".",
-      TRUE ~ ""
-    ))
+#  mutate(
+ #   significance = case_when(
+  #    p.value < 0.001 ~ "***",
+   #   p.value < 0.01  ~ "**",
+    #  p.value < 0.05  ~ "*",
+     # p.value < 0.1   ~ ".",
+      #TRUE ~ ""
+    #))
 #write.csv(anova_summary, "../../Summaries and Outputs/3/24_anova_model_recombination.csv", row.names = FALSE)
 
 # 6. Visualization
@@ -297,3 +297,4 @@ write.csv(
   "../../Summaries and Outputs/3/28_mean_recombination_by_GB_Diet.csv",
   row.names = FALSE
 )
+

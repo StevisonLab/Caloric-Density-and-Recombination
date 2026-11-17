@@ -27,7 +27,7 @@ source("../../Code/3/i_plot_fecundity-fertility-viabilty.R")
 source("../../Code/3/j_marker present viabilty.R")
 
 # RR survivorship
-source("../../Code/3/k_RR-SURVIVERSHIP.R")
+source("../../Code/3/Kb_RR_SURVIVAL&FECUNDITY.R")
 
 # Body mass
 source("../../Code/3/l_body mass.R")
