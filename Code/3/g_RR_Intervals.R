@@ -25,29 +25,58 @@ for(i in 1:(length(markers)-1)){
   )
 }
 
-# --- Table 2: Recombination rates ---
-table2 <- lapply(intervals, function(intv){
+# --- Table 6: Recombination fractions (Mean ± SE) ---
+
+table6_summary <- lapply(intervals, function(intv){
   df %>%
     group_by(GB, Diet) %>%
     summarise(
-      mean_val = mean(.data[[intv$xcol]], na.rm=TRUE),
-      sd_val   = sd(.data[[intv$xcol]], na.rm=TRUE),
+      n = sum(!is.na(.data[[intv$xcol]])),
+      mean_val = mean(.data[[intv$xcol]], na.rm = TRUE),
+      sd_val = sd(.data[[intv$xcol]], na.rm = TRUE),
+      se_val = sd_val / sqrt(n),
+      min_val = min(.data[[intv$xcol]], na.rm = TRUE),
+      max_val = max(.data[[intv$xcol]], na.rm = TRUE),
+      above_05 = sum(.data[[intv$xcol]] > 0.5, na.rm = TRUE),
+      below_0 = sum(.data[[intv$xcol]] < 0, na.rm = TRUE),
       .groups = "drop"
     ) %>%
     mutate(interval = intv$name)
-}) %>% bind_rows() %>%
-  pivot_wider(names_from = c(GB, Diet), values_from = c(mean_val, sd_val), names_sep="_")
+}) %>% bind_rows()
 
-# Combine mean ± sd into one string column
-mean_cols <- grep("^mean_val", names(table2), value = TRUE)
-for(col in mean_cols){
-  sd_col <- sub("mean_val", "sd_val", col)
-  table2[[col]] <- paste0(round(table2[[col]],2), " ± ", round(table2[[sd_col]],2))
-}
+# Check the original values, SD, SE and sample sizes
+print(table6_summary, n = Inf, width = Inf)
 
-# Drop SD columns
-table2 <- table2 %>% select(-starts_with("sd_val"))
-write.csv(table2, "33_Table2_RecombinationRates_intervals.csv", row.names=FALSE)
+# Create the manuscript table
+table6 <- table6_summary %>%
+  mutate(
+    Mean_SE = sprintf("%.3f ± %.3f", mean_val, se_val)
+  ) %>%
+  select(interval, GB, Diet, Mean_SE) %>%
+  pivot_wider(
+    names_from = c(GB, Diet),
+    values_from = Mean_SE,
+    names_sep = "_"
+  )
+
+# View corrected table
+print(table6, width = Inf)
+
+View(table6)
+
+# Save corrected table
+write.csv(
+  table6,
+  "33_Table6_RecombinationRates_intervals_SE.csv",
+  row.names = FALSE
+)
+
+# Save detailed diagnostic results
+write.csv(
+  table6_summary,
+  "33_Table6_Diagnostic.csv",
+  row.names = FALSE
+)
 
 # --- Table 3: Crossover interference (1 - coefficient of coincidence) ---
 double_intervals <- list(

@@ -40,17 +40,50 @@ df$People <- as.factor(df$People)
 df$recombination_fractions <- as.numeric(df$recombination_fractions)
 write.csv(df, "29_df_RecombinationFrequency.csv", row.names = FALSE)
 
-###delete the outliers
-#statistical
+# Number of observations before filtering
+n_before <- nrow(df)
+
+# Calculate IQR thresholds across all observations
+Q1 <- quantile(df$recombination_fractions, 0.25, na.rm = TRUE)
+Q3 <- quantile(df$recombination_fractions, 0.75, na.rm = TRUE)
+IQR_value <- Q3 - Q1
+
+lower_bound <- Q1 - 1.5 * IQR_value
+upper_bound <- Q3 + 1.5 * IQR_value
+
+# Count outliers
+n_outliers <- sum(
+  df$recombination_fractions < lower_bound |
+    df$recombination_fractions > upper_bound,
+  na.rm = TRUE
+)
+
+# Count missing observations separately
+n_missing <- sum(is.na(df$recombination_fractions))
+
+# Remove outliers
 df <- df %>%
-  #group_by(Diet, GB) %>%
+  ungroup() %>%
   filter(
-    recombination_fractions >= quantile(recombination_fractions, 0.25, na.rm = TRUE) -
-      1.5 * IQR(recombination_fractions, na.rm = TRUE),
-    recombination_fractions <= quantile(recombination_fractions, 0.75, na.rm = TRUE) +
-      1.5 * IQR(recombination_fractions, na.rm = TRUE)
-  ) %>%
-  ungroup()
+    recombination_fractions >= lower_bound,
+    recombination_fractions <= upper_bound
+  )
+
+# Number of observations after filtering
+n_after <- nrow(df)
+
+# Summarize filtering
+data.frame(
+  Before = n_before,
+  After = n_after,
+  Outliers_removed = n_outliers,
+  Missing_removed = n_missing,
+  Percent_outliers_removed = round(
+    100 * n_outliers / (n_before - n_missing), 2
+  ),
+  Lower_bound = lower_bound,
+  Upper_bound = upper_bound
+)
 
 ###delete the outlines
 #Biological
